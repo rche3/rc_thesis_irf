@@ -1,7 +1,6 @@
 function [Beff, Sigma_hold] = lusompa_lp_gls_boot(y,arp,nstraps,maxh,blocksize,badj,full) 
 
 %LP GLS Bootstrap Code
-cd /Users/rogerchen/Documents/MATLAB/Thesis_24/LPW_24_v3/lp_var_simul/Estimation_Routines/LP_GLS/
 %Input:
     %y is the qxT matrix of variables
     %arp is the lag length
