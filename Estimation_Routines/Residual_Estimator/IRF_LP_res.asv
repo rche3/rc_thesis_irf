@@ -8,8 +8,14 @@ if (nhorizons + nlags) >= nT
     error("Number of horizons too large! No obs in sample!")
 end
 
-% compute the residuals for the max horizon H
-res = LP_res(Y,recurShock,respV,nlags,nhorizons); % this produces the residuals per horizon
+res = zeros(1,nhorizons + 1);
+
+% compute the residual for 
+for h = 0:nhorizons
+    residual = LP_res(Y,recurShock,respV,nlags,h); % this produces the residuals per horizon. 
+    
+    % res should be a (T-p-H) x 1 vector
+end
 
 end
 

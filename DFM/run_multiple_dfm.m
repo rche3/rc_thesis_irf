@@ -1,4 +1,3 @@
-cd /Users/rogerchen/Documents/MATLAB/Thesis_24/LPW_24_v3/lp_var_simul/DFM/
 
 % estimand_vars = {'ObsShock', 'Recursive', 'IV'};
 estimand_vars = {'ObsShock', 'Recursive', 'IV'};
