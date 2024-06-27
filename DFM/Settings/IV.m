@@ -11,7 +11,7 @@ settings.est.IV.IV_strength_scale = [1.1 1.5 2.3]; % scale up or down baseline I
 
 % estimation methods
 
-settings.est.methods_name    = [settings.est.methods_name {'svar_iv'}]; % add SVAR-IV to the estimators
+settings.est.methods_name    = [settings.est.methods_name {'svar_iv'} {'resid_est'}]; % add SVAR-IV, resid_est, ... (other IV estimators) to the estimator list
 
 % indicate estimand
 

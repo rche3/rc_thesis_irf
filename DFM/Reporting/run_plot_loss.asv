@@ -1,5 +1,5 @@
 %% DFM SIMULATION STUDY: PLOT BIAS/VARIANCE LOSSES
-% Dake Li, Mikkel Plagborg-Møller and Christian Wolf
+% Dake Li, Mikkel Plagborg-MÃ¸ller and Christian Wolf
 
 %% HOUSEKEEPING
 
@@ -51,7 +51,7 @@ for n_mode=1:length(mode_folders) % For each robustness check mode...
     for nf=1:length(lags_folders) % For each lag-order folder...
     
         for ne=1:length(exper_files) % For each experiment in folder...
-            
+                   
             %----------------------------------------------------------------
             % Load Results
             %----------------------------------------------------------------
@@ -140,6 +140,7 @@ for n_mode=1:length(mode_folders) % For each robustness check mode...
                 the_ranks = permute(tiedrank(permute(the_result, [3 1 2])), [2 3 1]); % Rank procedures from lowest to highest (break ties by averaging)
     
                 % normalized losses
+                disp(size(results));
                 
                 plot_loss(horzs-1, squeeze(quantile(the_result./the_rms_irf, loss_quant, 2)), [], ...
                     strjoin({exper_plotname, ': Relative', the_titles{j}}), methods_names_plot, font_size);

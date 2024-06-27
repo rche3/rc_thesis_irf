@@ -1,3 +1,6 @@
+cd /Users/rogerchen/Documents/sis_24/LPW_24_v3/lp_var_simul/DFM/
+
+% estimand_vars = {'ObsShock', 'Recursive', 'IV'};
 estimand_vars = {'ObsShock', 'Recursive', 'IV'};
 
 % Define the values for the DGP types

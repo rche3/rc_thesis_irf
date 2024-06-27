@@ -1,4 +1,4 @@
-cd /users/rogerchen/Documents/MATLAB/Thesis_24/LPW_24_v3/lp_var_simul/DFM/
+
 estimand_vars = {'ObsShock', 'Recursive', 'IV'};
 
 % Define the values for the DGP types

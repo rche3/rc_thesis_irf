@@ -4,7 +4,7 @@ function plot_loss(horzs, results, add_line, plot_name, plot_legend, font_size, 
     % settings
 
     line_colors = repmat([lines(7); 0.5 0.5 0.5],2,1);
-    colors_indx = [4 3 1 2 8 5 6 7 9];
+    colors_indx = [4 3 1 2 8 5 6 7 9 10 11];
     line_colors = line_colors(colors_indx,:);
     line_styles = {'-', '--', '-x', '-', '.-', '-.', '-o', ':', ':o', ...
                '-s', '--s', ':s', '-.s', ...
@@ -29,8 +29,10 @@ function plot_loss(horzs, results, add_line, plot_name, plot_legend, font_size, 
     set(gca,'FontSize',7/8*font_size)
     set(gca,'TickLabelInterpreter','latex')
     grid on
-    
+
     hold on;
+
+    
     for i=1:size(results,2)
         plot(horzs, results(:,i)', line_styles{i}, 'Color', line_colors(i,:), 'LineWidth', line_width(i));
         xlim([min(horzs) max(horzs)])

@@ -33,7 +33,6 @@ if (nargin<4); plotfl=0; end ;
 
 if (all(isfinite(y),2) & all(isfinite(X),2)) ;
   [Q,R] = qr(X,0) ; % Gram-Schmidt decomposition X = Q*R, Q orthogonal.
-  disp(size(R))
   XXinv = inv(R) / R' ;
   betah = R \ Q'*y ;
   omegah = repmat(XXinv,[1 1 m]) ;
