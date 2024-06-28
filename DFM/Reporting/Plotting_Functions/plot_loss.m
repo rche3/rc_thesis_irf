@@ -47,6 +47,7 @@ function plot_loss(horzs, results, add_line, plot_name, plot_legend, font_size, 
         xlim(the_xlim);
     end
     xlabel('Horizon','interpreter','latex','FontSize',font_size);
+    title(plot_name)
     set(gca, 'XTick', [min(horzs) 2:2:max(horzs)]);
     if isempty(varargin)
         legend(plot_legend, 'Location', 'eastoutside', 'NumColumns', 1, 'interpreter', 'latex','FontSize',font_size);
