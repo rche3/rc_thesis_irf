@@ -1,0 +1,18 @@
+function [IRF,n_lags_est] = LP_IV_controls_est(data_sim,settings)
+%LP_IV_CONTROLS_EST Summary of this function goes here
+
+% preparations
+
+run('Estimation_Setup'); % common setup for all estimation methods
+
+% note that recursiveShock is always one for this estimator as by
+% definition for all I
+% estimate IRF via LP
+disp(Y)
+disp(recursiveShock)
+disp(responseV)
+
+% [IRF,w] = IRF_LP_IVC(Y,recursiveShock,responseV,nlags,IRF_hor - 1); % IRF to one unit of shock
+
+end
+

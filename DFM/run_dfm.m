@@ -270,6 +270,10 @@ parfor i_MC = 1:settings.simul.n_MC
                 case 'residual' % residual-based estimator   
                     [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec)]...
                         = resid_est(data_sim_select,settings);
+
+                case 'lp_IV_controls' % LP
+                    [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec)]...
+                        = LP_IV_controls_est(data_sim_select,settings);
             end
             
         end
