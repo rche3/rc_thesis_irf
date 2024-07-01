@@ -22,7 +22,7 @@ lags_select    = 2; % options: 1 (AIC), 2 (4 lags), 3 (8 lags), 4 (12 lags)
 exper_select_group = {[2,5], [3,6], [1,4]}; % combine G and MP for observed shock, recursive, and IV
 
 % select estimation methods for each experiment
-methods_iv_select        = [1 2 3 4 5 6 7 8 9 10 11];
+methods_iv_select        = [1 2 3 4 5 6 7 8 9 10 11 12];
 methods_obsshock_select  = [1 2 3 4 5 6 7 8 9];
 methods_recursive_select = [1 2 3 4 5 6 7 8 9];
 
