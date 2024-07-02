@@ -93,3 +93,6 @@ settings.est.average_store_weight       = [2, 5, 9, 15, 21]; % store model weigh
 settings.est.average_store_submodel_irf = 0; % store IRF of each submodel? Only store if want to comput oracle weight
 settings.est.average_max_lags           = 1; % include lags up to n_lags_max? otherwise up to estimated lags
 settings.est.average_options            = optimoptions('quadprog','Display','off');
+
+% LP-IV controls
+settings.est.lpiv_controls_include_proxy = 1;

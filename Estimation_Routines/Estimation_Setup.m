@@ -10,10 +10,14 @@ n_lags_fix = settings.est.n_lags_fix;
 
 response_pos = settings.est.IRF_response_var_pos;
 normalize_pos = settings.est.est_normalize_var_pos;
+fixed_pos = settings.specifications.random_fixed_pos;
 
 with_shock = settings.est.with_shock;
 recursive_shock = settings.est.recursive_shock;
 with_IV = settings.est.with_IV;
+
+include_proxy = settings.est.lpiv_controls_include_proxy;
+
 
 if with_shock == 1
     normalize_with_shock_std_dev = settings.est.normalize_with_shock_std_dev;
@@ -39,6 +43,7 @@ elseif with_IV == 1 % IV: w_t = (IV, \bar{w}_t)
     responseV = response_pos + 1;
     recursiveShock = 1;
     normalizeV = normalize_pos + 1;
+    policyV = fixed_pos + 1;
 else % recursive: w_t = \bar{w}_t
     Y = data_sim.data_y;
     responseV = response_pos;
