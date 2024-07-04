@@ -1,5 +1,6 @@
-function res = IRF_LP_res(Y,recurShock,respV,nlags,nhorizons)
-% Auxiliary function for estimating IRFs using least-squares LP
+function res = IRF_LP_res(Y,recurShock,respV,nlags, nhorizons)
+% Computes a matrix of residuals K x T from which the relevant ones can be
+% selected for IRF
 
 nT = size(Y,1);
 
@@ -9,7 +10,7 @@ if (nhorizons + nlags) >= nT
 end
 
 % compute the residuals for the max horizon H
-res = LP_res(Y,recurShock,respV,nlags,nhorizons); % this produces the residuals per horizon
+res = LP_res(Y,recurShock,respV,nlags,nhorizons); 
 
 end
 
