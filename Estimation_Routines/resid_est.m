@@ -5,7 +5,7 @@ function [IRF, n_lags_est] = resid_est(data_sim,settings)
 run('Estimation_Setup'); % common setup for all estimation methods
 
 %%% compute the LP residuals (LP errors)
-res = IRF_LP_res(Y,recursiveShock,responseV,nlags,IRF_hor - 1); % residuals for IRF estimator
+res = IRF_LP_res(Y,recursiveShock,responseV,nlags,IRF_hor - 1); % residuals for IRF estimator, T x K
 
 %%% compute the estimator using the proxy z_t
 % restrict the z_t to p+1:T-H
@@ -25,7 +25,8 @@ numerator = sum(z_t_matrix_scaled, 1);
 
 denominator = theta_tH' * z_t(IRF_hor:end)';
 
-IRF = (1/denominator) * numerator
+IRF = (1/denominator) * numerator;
+IRF = IRF';
 
 end
 

@@ -1,7 +1,0 @@
-function resid = proj_w_resid(inp_vec, nlags, h, include_proxy)
-
-%   Detailed explanation goes here
-outputArg1 = inputArg1;
-outputArg2 = inputArg2;
-end
-
