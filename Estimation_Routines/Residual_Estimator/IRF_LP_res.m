@@ -1,6 +1,6 @@
-function res = IRF_LP_res(Y,recurShock,respV,nlags, nhorizons)
-% Computes a matrix of residuals K x T from which the relevant ones can be
-% selected for IRF
+function res = IRF_LP_res(Y,recurShock,nlags, nhorizons)
+% Computes a matrix of residuals (T-H-p) x K from estimating the LP form of
+% VAR(p) model.
 
 nT = size(Y,1);
 
@@ -9,8 +9,8 @@ if (nhorizons + nlags) >= nT
     error("Number of horizons too large! No obs in sample!")
 end
 
-% compute the residuals for the max horizon H
-res = LP_res(Y,recurShock,respV,nlags,nhorizons); 
+% compute the residuals matrix for max horizon, return (K x (T-H-p))
+res = LP_res(Y,recurShock,nlags,nhorizons); 
 
 end
 

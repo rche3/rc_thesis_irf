@@ -219,8 +219,8 @@ parfor i_MC = 1:settings.simul.n_MC
     
         % estimate IRFs
         
-        for i_method = 1:settings.est.n_methods
-            
+        for i_method = 1:settings.est.n_methods         
+
             switch settings.est.methods_name{i_method}
 
                 case 'svar' % VAR
@@ -270,7 +270,7 @@ parfor i_MC = 1:settings.simul.n_MC
                 case 'residual' % residual-based estimator   
                     [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec)]...
                         = resid_est(data_sim_select,settings);
-
+                
                 case 'lp_IV_controls' % LP
                     [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec)]...
                         = LP_IV_controls_est(data_sim_select,settings);
@@ -279,6 +279,8 @@ parfor i_MC = 1:settings.simul.n_MC
         end
         
     end
+
+    
     
     %----------------------------------------------------------------
     % Move Results to Permanent Storage in parfor
@@ -303,6 +305,7 @@ parfor i_MC = 1:settings.simul.n_MC
 
 end
 
+save(['/Users/rogerchen/Documents/MATLAB/rc_thesis_irf/Temp/' 'results_irf_save'], 'results_irf')
 % clear temporary storage
 
 clear temp_* i_MC i_spec data_sim_all data_sim_select i_method

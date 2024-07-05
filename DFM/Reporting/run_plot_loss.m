@@ -6,7 +6,6 @@
 clc
 clear all
 close all
-
 addpath(genpath(fullfile('..', 'Subroutines')))
 
 %% SETTINGS
@@ -133,6 +132,7 @@ for n_mode=1:length(mode_folders) % For each robustness check mode...
     
             the_methods_index = cellfun(@(x) find(strcmp(res.settings.est.methods_name, x)),  methods_fields{ne}, 'UniformOutput',false); % index of each method
             the_methods_index = cell2mat(the_methods_index);
+            disp(the_methods_index)
             for j=1:length(the_objects)
                 
                 the_result = sqrt(extract_struct(res.results.(the_objects{j})));
