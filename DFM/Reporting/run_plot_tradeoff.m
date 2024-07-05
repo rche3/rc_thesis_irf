@@ -1,5 +1,5 @@
 %% DFM SIMULATION STUDY: METHOD CHOICE
-% Dake Li, Mikkel Plagborg-Møller and Christian Wolf
+% Dake Li, Mikkel Plagborg-Mï¿½ller and Christian Wolf
 
 %% HOUSEKEEPING
 

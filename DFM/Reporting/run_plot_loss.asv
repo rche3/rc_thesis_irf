@@ -6,7 +6,6 @@
 clc
 clear all
 close all
-
 addpath(genpath(fullfile('..', 'Subroutines')))
 
 %% SETTINGS
@@ -22,7 +21,7 @@ lags_select    = 2; % options: 1 (AIC), 2 (4 lags), 3 (8 lags), 4 (12 lags)
 exper_select_group = {[2,5], [3,6], [1,4]}; % combine G and MP for observed shock, recursive, and IV
 
 % select estimation methods for each experiment
-methods_iv_select        = [1 2 3 4 5 6 7 8 9 10 11];
+methods_iv_select        = [1 2 3 4 5 6 7 8 9 10 11 12];
 methods_obsshock_select  = [1 2 3 4 5 6 7 8 9];
 methods_recursive_select = [1 2 3 4 5 6 7 8 9];
 
@@ -51,7 +50,7 @@ for n_mode=1:length(mode_folders) % For each robustness check mode...
     for nf=1:length(lags_folders) % For each lag-order folder...
     
         for ne=1:length(exper_files) % For each experiment in folder...
-                   
+            
             %----------------------------------------------------------------
             % Load Results
             %----------------------------------------------------------------
@@ -133,6 +132,7 @@ for n_mode=1:length(mode_folders) % For each robustness check mode...
     
             the_methods_index = cellfun(@(x) find(strcmp(res.settings.est.methods_name, x)),  methods_fields{ne}, 'UniformOutput',false); % index of each method
             the_methods_index = cell2mat(the_methods_index);
+            disp(the_methods_index)
             for j=1:length(the_objects)
                 
                 the_result = sqrt(extract_struct(res.results.(the_objects{j})));
@@ -140,7 +140,6 @@ for n_mode=1:length(mode_folders) % For each robustness check mode...
                 the_ranks = permute(tiedrank(permute(the_result, [3 1 2])), [2 3 1]); % Rank procedures from lowest to highest (break ties by averaging)
     
                 % normalized losses
-                disp(size(results));
                 
                 plot_loss(horzs-1, squeeze(quantile(the_result./the_rms_irf, loss_quant, 2)), [], ...
                     strjoin({exper_plotname, ': Relative', the_titles{j}}), methods_names_plot, font_size);

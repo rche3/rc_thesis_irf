@@ -167,7 +167,7 @@ disp(['dgp type: ', dgp_type]);
 disp(['estimand type: ', estimand_type]);
 disp(['lag type: ', num2str(lag_type)]);
 
-parfor i_MC = 1:settings.simul.n_MC
+for i_MC = 1:settings.simul.n_MC
     disp(['Completed ', num2str(settings.simul.n_MC - i_MC), ' out of ', num2str(settings.simul.n_MC)])
 
 
@@ -223,6 +223,9 @@ parfor i_MC = 1:settings.simul.n_MC
             
             switch settings.est.methods_name{i_method}
 
+                if i_method == 1
+                    e
+
                 case 'svar' % VAR
                     [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec),temp_largest_root_svar(i_spec),...
                         temp_LM_stat_svar(i_spec),temp_LM_pvalue_svar(i_spec),...
@@ -270,11 +273,17 @@ parfor i_MC = 1:settings.simul.n_MC
                 case 'residual' % residual-based estimator   
                     [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec)]...
                         = resid_est(data_sim_select,settings);
+                
+                case 'lp_IV_controls' % LP
+                    [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec)]...
+                        = LP_IV_controls_est(data_sim_select,settings);
             end
             
         end
         
     end
+
+    
     
     %----------------------------------------------------------------
     % Move Results to Permanent Storage in parfor
@@ -299,6 +308,7 @@ parfor i_MC = 1:settings.simul.n_MC
 
 end
 
+save(['/Users/rogerchen/Documents/MATLAB/rc_thesis_irf/Temp/' 'results_irf_save'], 'results_irf')
 % clear temporary storage
 
 clear temp_* i_MC i_spec data_sim_all data_sim_select i_method

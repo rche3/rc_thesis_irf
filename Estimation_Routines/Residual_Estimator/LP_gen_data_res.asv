@@ -1,0 +1,16 @@
+function [y, x] = LP_gen_data_res(Y,recurShock,nlags,h)
+% LP_GEN_DATA_RES generates data (Y and X) to estimate the LP form of
+% VAR(p)
+
+nv = size(Y,2);
+nT = size(Y,1);
+
+y  = Y; %
+if recurShock > 1 % check if there are contemperaneous controls
+    w  = [ lagmatrix(Y(:,1:(recurShock - 1)), nhorizon) , lagmatrix( Y , (1:nlags) + nhorizon ) ]; % control variables (contemporaneous vars, lagged vars, no constant)
+else
+    w  = lagmatrix( Y , (1:nlags) + nhorizon );
+end
+y = y((nlags + nhorizon + 1):end);
+w = w((nlags + nhorizon + 1):end, :); % Warning: here w include both contemperaneous and lagged controls
+end

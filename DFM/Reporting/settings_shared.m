@@ -48,7 +48,7 @@ exper_names   = exper_names_list(exper_select);
 
 methods_obsshock_fields  = {'svar','svar_corrbias','bvar','lp','lp_corrbias','lp_penalize','var_avg', 'lp_lagaug', 'lp_gls' };
 methods_recursive_fields = methods_obsshock_fields;
-methods_iv_fields        = [methods_obsshock_fields {'svar_iv'} {'resid_est'} {'lp_IV_controls'}];
+methods_iv_fields        = [methods_obsshock_fields {'svar_iv'} {'residual'} {'lp_IV_controls'}];
 
 methods_obsshock_names  = {'VAR','BC VAR','BVAR','LP','BC LP','Pen LP','VAR Avg', 'Lag-Aug LP', 'GLS LP'};
 methods_recursive_names = methods_obsshock_names;
