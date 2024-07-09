@@ -230,8 +230,8 @@ elseif trend==0
     rpos=2;
 end
 
+% Generate the standard LP IRFs
 [liny, confidencey]=linlp_rz(data,x,hor,rpos,transformation, clevel, opt);
-
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
