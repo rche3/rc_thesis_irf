@@ -1,4 +1,4 @@
-function [liny,confidencey]=linlp_biascorrect(data,x,hor,rpos,transformation, clevel, opt) 
+function [liny,confidencey]=linlp_penalised(data,x,hor,rpos,transformation, clevel, opt) 
 
 [dr,dsize]=size(data);
 for j=1:dsize
@@ -23,7 +23,7 @@ for j=1:dsize
     end
 
     
-    liny(j,:)=reglin(rpos,:).*1.1;% random placeholder for testing
+    liny(j,:)=reglin(rpos,:).*1.3; % random placeholder for testing
     sey(j,:)=se(rpos,:);
     confidencey(1,:,j)=liny(j,:)-(sey(j,:)*clevel);
     confidencey(2,:,j)=liny(j,:)+(sey(j,:)*clevel);

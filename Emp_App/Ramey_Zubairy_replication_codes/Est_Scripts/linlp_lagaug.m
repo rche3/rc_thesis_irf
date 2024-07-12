@@ -1,11 +1,11 @@
-function [liny,confidencey]=linlp_lagaug_rz(data,x,hor,rpos,transformation, clevel, opt) 
+function [liny,confidencey]=linlp_lagaug(data,x,hor,rpos,transformation, clevel, opt) 
 
 % for lag-aug just need to change the regressor to include extra lag.
 [dr,dsize]=size(data);
-for j=1:dsize
+for j=1:dsize % looping over the response parameters
     [r,nnn]=size(x);
     
-    for i=1:hor
+    for i=1:hor % looping over the horizons
         if transformation==1
             yy=data(i:end,j);
         elseif transformation==2
@@ -24,7 +24,7 @@ for j=1:dsize
     end
 
     
-    liny(j,:)=reglin(rpos,:);
+    liny(j,:)=reglin(rpos,:);% random placeholder for testing
     sey(j,:)=se(rpos,:);
     confidencey(1,:,j)=liny(j,:)-(sey(j,:)*clevel);
     confidencey(2,:,j)=liny(j,:)+(sey(j,:)*clevel);
