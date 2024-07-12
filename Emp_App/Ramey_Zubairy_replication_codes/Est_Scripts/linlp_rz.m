@@ -23,7 +23,7 @@ for j=1:dsize
     end
 
     
-    liny(j,:)=reglin(rpos,:);
+    liny(j,:)=reglin(rpos,:); % only take the beta results
     sey(j,:)=se(rpos,:);
     confidencey(1,:,j)=liny(j,:)-(sey(j,:)*clevel);
     confidencey(2,:,j)=liny(j,:)+(sey(j,:)*clevel);
