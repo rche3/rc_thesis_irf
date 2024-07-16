@@ -1,5 +1,6 @@
 function [liny,confidencey]=linlp_biascorrect(data,x,hor,rpos,transformation, clevel, opt) 
 
+% bias-corrected LP, code from Li et. al (2024+)
 [dr,dsize]=size(data);
 for j=1:dsize
     [r,nnn]=size(x);
@@ -21,11 +22,17 @@ for j=1:dsize
         end
         
     end
-
+    liny(j,:)=reglin(rpos,:);% random placeholder for testing
     
-    liny(j,:)=reglin(rpos,:).*1.1;% random placeholder for testing
+    % do bias correction
+    IRF = liny(j, :);
+    w = x(:, rpos+1:end); % define control matrix as everything ordered after the shock in the "x" matrix of regressor
+    
+    liny(j, :) = bias_correction(IRF, w);
+
     sey(j,:)=se(rpos,:);
     confidencey(1,:,j)=liny(j,:)-(sey(j,:)*clevel);
     confidencey(2,:,j)=liny(j,:)+(sey(j,:)*clevel);
 end
 
+end

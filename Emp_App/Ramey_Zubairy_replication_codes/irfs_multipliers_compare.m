@@ -242,9 +242,9 @@ lin_results = struct(); % struct to store linear model results
 [lin_results.IRF.LP, lin_results.CI.LP]=linlp_rz(data,x,hor,rpos,transformation, clevel, opt); % standard LP, code from RZ2018
 
 % bias correction
-[lin_results.IRF.LP_BC, lin_results.CI.LP_BC]=linlp_biascorrect(data,x,hor,rpos,transformation, clevel, opt); % standard LP
+[lin_results.IRF.LP_BC, lin_results.CI.LP_BC]=linlp_biascorrect(data,x,hor,rpos,transformation, clevel, opt);
 % penalised LP
-[lin_results.IRF.LP_Penalised, lin_results.CI.LP_Penalised]=linlp_penalised(data,x,hor,rpos,transformation, clevel, opt); 
+[lin_results.IRF.LP_Penalised, lin_results.CI.LP_Penalised]=linlp_penalised(data,x,hor,rpos,transformation, clevel, opt, nlag); 
 % lag-augmented LP
 [lin_results.IRF.LP_Lagaug, lin_results.CI.LP_Lagaug]=linlp_lagaug(data(2:end, :),x_la,hor,rpos,transformation, clevel, opt);
 

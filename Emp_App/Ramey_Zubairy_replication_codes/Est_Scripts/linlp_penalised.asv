@@ -17,7 +17,7 @@ lambdaRange = [1e-4, lambdaRange, 1e10];
 
 % settings to allow integration of LPW2024+ code
 recursiveShock = 0;
-normalizeV = 1; % we are just normalising with respect to the shock itself (let this be ordered first column in the entire matrix of observed series)
+normalizeV = 1; % we are just normalis
 nlags = nlag;
 
 % prep, init varibles
