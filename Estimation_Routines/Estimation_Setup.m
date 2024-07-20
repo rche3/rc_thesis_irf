@@ -23,8 +23,8 @@ if with_shock == 1
     normalize_with_shock_std_dev = settings.est.normalize_with_shock_std_dev;
 end
 
-if recursive_shock == 1
-    recursive_shock_pos = settings.est.recursive_shock_pos;
+if recursive_shock == 1 % this is just checking if we are using the recursive shock estimand
+    recursive_shock_pos = settings.est.recursive_shock_pos; % if using recursive, then the recursive shock position will be as defined in the recursive settings (e.g. random)
 end
 
 % collect data

@@ -2,6 +2,8 @@ clear all
 close all
 %clc
 warning off;
+
+addpath(genpath('Plots'));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % INPUT SPECIFICATION CHOICES 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -32,192 +34,11 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 hor=20; % horizon for IRFs
 clevel= 1.96; % confidence level % 1.96  1.64;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+run('figure_irfs_multipliers_setup.m')
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%DATA
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-vdata = xlsread('RZDAT.xlsx',2); % US data
-time=vdata(:,1);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%IMPORTANT INPUT (sample window)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if timesample==1
-    t1=find(time==1889.75); 
-    t2=find(time==2015.75);
-elseif timesample==2
-    t1=find(time==1947);
-    t2=find(time==2015.75);
-elseif timesample==3
-    t1=find(time==1919);
-    t2=find(time==2015.75);
-end
-
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %DATA
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-vdata=vdata(t1:t2,:); 
-q=vdata(:,1);
-ngov=vdata(:,2);
-ngdp=vdata(:,3);
-pgdp=vdata(:,4);
-totpop=vdata(:,5);
-recession=vdata(:,6);
-unemp=vdata(:,7);
-pdvmil=vdata(:,8);
-realgdp=vdata(:,9);
-ntax=vdata(:,10);
-def=vdata(:,11);
-tb3=vdata(:,12);
-zlbdummy=vdata(:,13);
-potgdp_alt=vdata(:,14);
-potgdp=vdata(:,15);
-
-hpunemp=vdata(:,25);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%DATA TRANSFORMATION
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Creating variables of interest
-if transformation==1
-    for t=2:size(pdvmil,1)
-        %pdvmily(t,1)= pdvmil(t,1)./(pgdp(t-1,1).*potgdp(t,1));
-        pdvmily(t,1)= pdvmil(t,1)./(pgdp(t-1,1).*potgdp(t-1,1));
-    end
-elseif transformation==2
-    for t=2:size(pdvmil,1)
-        pdvmily(t,1)= pdvmil(t,1)./ngdp(t-1,1);
-    end
-end
-
-
-rgdp=(realgdp./totpop);
-rgov=(ngov./totpop./pgdp);
-lrgdp=log(realgdp./totpop);
-lrgov=log(ngov./totpop./pgdp);
-lrtax=log(ntax./totpop./pgdp);
-rgdp_pot=realgdp./potgdp;
-rgov_pot=ngov./potgdp./pgdp;
-taxy=ntax./ngdp;
-defy=def./ngdp;
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %IMPORTANT INPUT (threshold for the unemployment rate)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if statechoice==1
-    state=unemp;
-    threshold=6.5;
-elseif statechoice==2
-    state=zlbdummy;
-    threshold=1;
-elseif statechoice==3
-    state=unemp;
-    threshold=8;
-elseif statechoice==4
-    state=unemp;
-    threshold=hpunemp;
-elseif statechoice==5
-    state=0.5; % since we want tb3<=0.5
-    threshold=tb3;
-elseif statechoice==6
-    state=recession;
-    threshold=1;
-end
-
-rrr=find(state>=threshold); 
-rrrn=rrr+1; %Since unemployment above threshold in the previous period is the criterion
-if rrrn(end)==length(unemp)+1
-    rrrn=rrrn(1:end-1);
-else
-    rrrn=rrrn;
-end
-fu=zeros(size(unemp));
-fu(rrrn)=1; % This is the dummy variable that defines the two states
-
-size(rrr)/size(unemp)
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-if transformation==1 % GK
-    if shockchoice==1 %news shock
-        if taxchoice==1
-            X1=[pdvmily rgdp_pot rgov_pot taxy];
-        else
-            X1=[pdvmily rgdp_pot rgov_pot];
-        end
-    else %BP shock
-        if taxchoice==1
-            X1=[rgdp_pot rgov_pot taxy];
-        else
-            X1=[rgdp_pot rgov_pot];
-        end
-    end
-elseif transformation==2 % HBR
-    if shockchoice==1
-        if taxchoice==1
-            X1=[pdvmily lrgdp lrgov taxy];
-        else
-            X1=[pdvmily lrgdp lrgov];
-        end
-    else
-        if taxchoice==1
-            X1=[ lrgdp lrgov taxy];
-        else
-            X1=[ lrgdp lrgov taxy];
-        end
-    end
-end
-[rx,cx]=size(X1); 
-
-lags=0:1:nlag;
-XLAG1 = lagmatrix(X1,[lags]);
-XLAG1_lagaug = lagmatrix(X1, [lags, nlag+1]); % lag matrix of "Y" data with an extra lag for lag-augmented LP
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%SHOCK IDENTIFICATION
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-if shockchoice==1 %news shock
-    shock=pdvmily(nlag+1:end);
-elseif shockchoice==2  %BP shock
-    if transformation==1
-        shock=rgov_pot(nlag+1:end);
-    elseif transformation==2
-        shock=lrgov(nlag+1:end); 
-    end
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%PRELIMINARIES
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-constant= ones(length(shock),1);
-t=1:1:length(constant);
-tsq=t.^2;
-tcu=t.^3;
-tqu=t.^4;
-
-% %Creating part of the new variables for HBR which are in levels, not logs.
-ynew=rgdp(nlag+1:end);
-Lynew=rgdp(nlag+1-1:end-1);
-gnew=rgov(nlag+1:end);
-Lgnew=rgov(nlag+1-1:end-1);
-
-xorig= XLAG1(nlag+1:end, cx+1:end);%only picks lagged values
-xorig_lagaug = XLAG1_lagaug(nlag+1:end, cx+1:end);%only picks lagged values
-
-if transformation==1
-    data=[rgov_pot(nlag+1:end), rgdp_pot(nlag+1:end)]; % Y variable
-elseif transformation==2
-    data=[rgov(nlag+0:end), rgdp(nlag+0:end)];
-end
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %LINEAR
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if trend==4
@@ -231,23 +52,31 @@ elseif trend==2
     x_la = [xreg(2:end, :), xorig_lagaug(2:end,:)];
     rpos=4;
 elseif trend==0
-    xreg = [constant, shock]
+    xreg = [constant, shock];
     x=[xreg,  xorig];
     x_la = [xreg(2:end,:), xorig_lagaug(2:end,:)];
     rpos=2;
 end
 
 lin_results = struct(); % struct to store linear model results
-[liny, confidencey]=linlp_rz(data,x,hor,rpos,transformation, clevel, opt);
-[lin_results.IRF.LP, lin_results.CI.LP]=linlp_rz(data,x,hor,rpos,transformation, clevel, opt); % standard LP, code from RZ2018
 
+% compute the IRFs now with various methods
+irfTypes = {'LP', 'LP_BC', 'LP_Penalised', 'LP_Lagaug', 'SVAR', 'Averaged'};
+
+% standard LP, code from RZ2018
+[lin_results.IRF.LP, lin_results.CI.LP]=linlp(data,x,hor,rpos,transformation, clevel, opt, 1); 
+liny = lin_results.IRF.LP;
+confidencey = lin_results.CI.LP;
 % bias correction
 [lin_results.IRF.LP_BC, lin_results.CI.LP_BC]=linlp_biascorrect(data,x,hor,rpos,transformation, clevel, opt);
 % penalised LP
 [lin_results.IRF.LP_Penalised, lin_results.CI.LP_Penalised]=linlp_penalised(data,x,hor,rpos,transformation, clevel, opt, nlag); 
 % lag-augmented LP
-[lin_results.IRF.LP_Lagaug, lin_results.CI.LP_Lagaug]=linlp_lagaug(data(2:end, :),x_la,hor,rpos,transformation, clevel, opt);
+[lin_results.IRF.LP_Lagaug, lin_results.CI.LP_Lagaug]=linlp_lagaug(data(2:end, :),x_la,hor,rpos,transformation, clevel, opt, 1);
+% VAR
+[lin_results.IRF.SVAR, lin_results.CI.SVAR] = SVAR(data, x, hor, rpos, transformation, clevel, opt, 0)
 
+% BVAR / BC-LP Averaged
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %NON-LINEAR
@@ -273,26 +102,19 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Figures 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+run('plot_setup.m') % load plot settings, colours etc. from this script
+
 % | Figure 5 - the IRFs to GDP and Gov. Spending, Linear Model ONLY |
 % -- Plot Gov Spending Response -- %
-zz=zeros(1,hor);
 i=1;
 figure(5)
+zz = zeros(1, hor);
+n = length(irfTypes);
 subplot(2,2,1)
 plot(1:1:hor, zz, 'k-') % plot line at y=0 to show x-axis
 hold on
 
-% plot results for the four LP variants
-irfTypes = {'LP', 'LP_BC', 'LP_Penalised', 'LP_Lagaug'};
-plotStyles = {
-    {'b-', 'LineWidth', 1.2},
-    {'r--', 'LineWidth', 1.2},
-    {'g-.', 'LineWidth', 1.2},
-    {'m:', 'LineWidth', 1.2}
-};
-
-% Replace the four individual plot commands with this loop
-h = zeros(1, length(irfTypes));
+h = zeros(1, n);
 for j = 1:length(irfTypes)
     irfType = irfTypes{j};
     h(j) = plot(1:1:hor, lin_results.IRF.(irfType)(i,:), plotStyles{j}{:}, 'DisplayName', irfType);
@@ -301,10 +123,10 @@ end
 
 axis tight
 ylabel('Government Spending')
-
-% Add legend
 lgd = legend('Location', 'northwest');
 lgd.Interpreter = 'none'; 
+
+% BELOW NEEDS TO BE FIXED ONCE S.E.s are done
 
 subplot(2,2,2)
 grpyat=[(1:1:hor)', confidencey(1,:,i)'; (hor:-1:1)' confidencey(2,hor:-1:1,i)'];
@@ -316,22 +138,12 @@ plot(1:1:hor, liny(i,:), 'k','LineWidth', 1.5)
 title('Linear')
 axis tight
 
-% Plot GDP Response
+% -- Plot GDP Response -- %
 i=2;
 subplot(2,2,3)
 plot(1:1:hor, zz, 'k-') % plot line at y=0 to show x-axis
 hold on
 
-% plot results for the four LP variants
-irfTypes = {'LP', 'LP_BC', 'LP_Penalised', 'LP_Lagaug'};
-plotStyles = {
-    {'b-', 'LineWidth', 1.2},
-    {'r--', 'LineWidth', 1.2},
-    {'g-.', 'LineWidth', 1.2},
-    {'m:', 'LineWidth', 1.2}
-};
-
-% Replace the four individual plot commands with this loop
 h = zeros(1, length(irfTypes));
 for j = 1:length(irfTypes)
     irfType = irfTypes{j};
@@ -341,11 +153,10 @@ end
 
 axis tight
 ylabel('GDP')
-
-% Add legend
 lgd = legend('Location', 'northwest');
 lgd.Interpreter = 'none'; 
 
+% BELOW NEEDS TO BE FIXED ONCE S.E.s are done
 subplot(2,2,4)
 grpyat=[(1:1:hor)', confidencey(1,:,i)'; (hor:-1:1)' confidencey(2,hor:-1:1,i)'];
 patch(grpyat(:,1), grpyat(:,2), [0.7 0.7 0.7],'edgecolor', [0.7 0.7 0.7]);
@@ -357,36 +168,27 @@ title('Linear')
 axis tight
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %Multipliers:
+% %Multipliers: HAVE EDITED LINEAR ONLY
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- 
-disp ('Output multipliers for the US')
-disp ( 'The multipliers by row are: 2 year integral multiplier, 4 year integral multiplier')
-a1=[sum(liny(2,1:8))./sum(liny(1,1:8)); sum(liny(2,1:16))./sum(liny(1,1:16)) ];
-a2=[ sum(stateay(2,1:8))./sum(stateay(1,1:8)); sum(stateay(2,1:16))./sum(stateay(1,1:16)) ];
-a3=[sum(stateby(2,1:8))./sum(stateby(1,1:8)); sum(stateby(2,1:16))./sum(stateby(1,1:16))];
-if statechoice==2
-    disp('LINEAR , ZLB state, NORMAL state') 
-else
-    disp('LINEAR , HIGH UNEMPLOYMENT state, LOW UNEMPLOYMENT state') 
-end
-    
-[a1, a2, a3]
 
-    
-cum_mult_lin=  cumsum(liny(2,:))./cumsum(liny(1,:));
+% compute linear multipliers
+for j = 1:length(irfTypes)
+    irfType = irfTypes{j};
+    lin_results.cum_mult.(irfType) = cumsum(lin_results.IRF.(irfType)(2, :)) ./ cumsum(lin_results.IRF.(irfType)(1, :));
+end
+
 cum_mult_statea= cumsum(stateay(2,:))./cumsum(stateay(1,:));
 cum_mult_stateb= cumsum(stateby(2,:))./cumsum(stateby(1,:));
 
-
-if shockchoice==1 %newsy
+% reads the multiplier standard errors that are computed via STATA
+if shockchoice==1 % newsy
     std1=xlsread('Multiplier-Standard-Errors.xlsx',2);
     stdlin=std1(1:20,3);
-    if statechoice==1 %slack
+    if statechoice==1 % slack
         std2=xlsread('Multiplier-Standard-Errors.xlsx',2);
         stdb=std2(1:20,5);
         stda=std2(1:20,7);
-    elseif statechoice==2 %ZLB
+    elseif statechoice==2 % ZLB
         std2=xlsread('Multiplier-Standard-Errors.xlsx',3);
         stdb=std2(1:20,5);
         stda=std2(1:20,7);
@@ -407,18 +209,32 @@ end
 
 multconfb=[cum_mult_stateb+clevel*stdb'; cum_mult_stateb-clevel*stdb'];
 multconfa=[cum_mult_statea+clevel*stda'; cum_mult_statea-clevel*stda'];
-multconfl=[cum_mult_lin+clevel*stdlin'; cum_mult_lin-clevel*stdlin'];
+
+% the linear model multiplier confidence intervals are placeholders 
+for j = 1:length(irfTypes)
+    irfType = irfTypes{j};
+    lin_results.cum_mult_CI.(irfType) = [lin_results.cum_mult.(irfType)+clevel*stdlin'; lin_results.cum_mult.(irfType)-clevel*stdlin'];
+end
 
 % Figure for multipliers
 figure(6)
-subplot(2,1,1)
-grpyat=[(1:1:hor)', multconfl(1,:)'; (hor:-1:1)' multconfl(2,hor:-1:1)'];
-patch(grpyat(:,1), grpyat(:,2), [0.7 0.7 0.7],'edgecolor', [0.7 0.7 0.7]);
-hold on 
-plot(1:1:hor, cum_mult_lin, 'k', 'LineWidth', 1.5);
-axis tight
-title('Linear: cumulative spending multiplier')
-subplot(2,1,2)
+
+for i = 1:length(irfTypes)
+    irfType = irfTypes{i};
+    subplot(2,length(irfTypes),i)
+    
+    grpyat=[(1:1:hor)', lin_results.cum_mult_CI.(irfType)(1,:)'; (hor:-1:1)', lin_results.cum_mult_CI.(irfType)(2,hor:-1:1)']; % create matrix for the CIs (basically it ends up tracing 1 -> hor upper bounds, then back around hor -> 1 lower bounds)
+    patch(grpyat(:,1), grpyat(:,2), patch_colors{i},'edgecolor', patch_colors{i}, 'DisplayName', strcat(irfType, ' CI')); % plot gray patch for CIs
+    hold on 
+    plot(1:1:hor, lin_results.cum_mult.(irfType), 'Color', line_colors{i}, 'LineWidth', 1.5, 'DisplayName', irfType); % plot point estimates for multiplier
+
+    axis tight
+    title('Linear: cumulative spending multiplier');
+    legend('Location', 'northeast')
+end
+
+% state dependent plot
+subplot(2,length(irfTypes),5)
 grpyat=[(1:1:hor)', multconfa(1,:)'; (hor:-1:1)' multconfa(2,hor:-1:1)'];
 patch(grpyat(:,1), grpyat(:,2), [0.7 0.7 0.7],'edgecolor', [0.7 0.7 0.7]);
 hold on 
