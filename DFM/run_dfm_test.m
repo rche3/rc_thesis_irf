@@ -25,7 +25,7 @@ tic;
 
 spec_id = 1; % seed for random draws of specifications (= DGPs from encompassing model)
 dgp_type = 'G'; % structural shock: either 'G' or 'MP'
-estimand_type = 'IV'; % structural estimand: either 'ObsShock', 'Recursive', or 'IV'
+estimand_type = 'ObsShock'; % structural estimand: either 'ObsShock', 'Recursive', or 'IV'
 lag_type = 4; % No. of lags to impose in estimation, or NaN (= AIC)
 mode_type = 1; % robustness check mode:
                % 1 (baseline), 2 (small sample), 3 (large sample),
