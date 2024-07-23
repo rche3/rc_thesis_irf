@@ -7,7 +7,10 @@ function [liny,confidencey] = SVAR(data,x,hor,rpos,transformation, clevel, opt, 
     normalizeV = 3; % we are normalising with one unit of shock
     recursiveShock = 3;
     Y = [data, x(:, 2)]; % construct the three-variable Y vector with gov, gdp, and shock
-     
+ 
+    % init vairables
+    
+
     % begin loop
     [dr,dsize]=size(data);
     for j=1:dsize
@@ -23,17 +26,16 @@ function [liny,confidencey] = SVAR(data,x,hor,rpos,transformation, clevel, opt, 
         ShockVector = G(:,recursiveShock);
     
         % estimate IRF
-        IRF = IRF_SVAR(By,ShockVector,hor-1); % IRF to one unit of shock
+        IRF = IRF_SVAR(By,ShockVector,IRF_hor - 1); % IRF to one unit of shock
         IRF = IRF(responseV,:) / IRF(normalizeV,1); % normalize by response of normalization variable
-
-        % get SEs - PLACEHOLDER, NEED FIX
-        se = abs(0.01 * IRF(1));
-
-        % store variables
-        liny(j,:)=IRF; % only take the beta results
-        sey(j,:)=se;
-        confidencey(1,:,j)=liny(j,:)-(sey(j,:)*clevel);
-        confidencey(2,:,j)=liny(j,:)+(sey(j,:)*clevel);
+        IRF = IRF';
     end
+
+    
+    
+    
+
+    
+
 end
 
