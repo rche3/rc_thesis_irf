@@ -61,7 +61,7 @@ end
 lin_results = struct(); % struct to store linear model results
 
 % compute the IRFs now with various methods
-irfTypes = {'LP', 'LP_BC', 'LP_Penalised', 'LP_Lagaug', 'SVAR', 'Averaged'};
+irfTypes = {'LP', 'LP_BC', 'LP_Penalised', 'LP_Lagaug', 'SVAR', 'VARLP_Avg'};
 
 % standard LP, code from RZ2018
 [lin_results.IRF.LP, lin_results.CI.LP]=linlp(data,x,hor,rpos,transformation, clevel, opt, 1); 
@@ -74,9 +74,9 @@ confidencey = lin_results.CI.LP;
 % lag-augmented LP
 [lin_results.IRF.LP_Lagaug, lin_results.CI.LP_Lagaug]=linlp_lagaug(data(2:end, :),x_la,hor,rpos,transformation, clevel, opt, 1);
 % VAR
-[lin_results.IRF.SVAR, lin_results.CI.SVAR] = SVAR(data, x, hor, rpos, transformation, clevel, opt, 0)
-
-% BVAR / BC-LP Averaged
+[lin_results.IRF.SVAR, lin_results.CI.SVAR] = SVAR(data, x, hor, rpos, transformation, clevel, opt, nlag, 0);
+% VAR / LP Averaged (TBD)
+[lin_results.IRF.VARLP_Avg, lin_results.CI.VARLP_Avg] = VARLP_Avg(data, x, hor, rpos, transformation, clevel, opt, nlag, 0, 0);
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %NON-LINEAR
@@ -102,7 +102,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Figures 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-run('plot_setup.m') % load plot settings, colours etc. from this script
+run('setup.m') % load settings, colours etc. from this script
 
 % | Figure 5 - the IRFs to GDP and Gov. Spending, Linear Model ONLY |
 % -- Plot Gov Spending Response -- %
@@ -111,7 +111,7 @@ figure(5)
 zz = zeros(1, hor);
 n = length(irfTypes);
 subplot(2,2,1)
-plot(1:1:hor, zz, 'k-') % plot line at y=0 to show x-axis
+plot(1:1:hor, zz, 'k-', 'HandleVisibility', 'off') % plot line at y=0 to show x-axis
 hold on
 
 h = zeros(1, n);
@@ -132,7 +132,7 @@ subplot(2,2,2)
 grpyat=[(1:1:hor)', confidencey(1,:,i)'; (hor:-1:1)' confidencey(2,hor:-1:1,i)'];
 patch(grpyat(:,1), grpyat(:,2), [0.7 0.7 0.7],'edgecolor', [0.7 0.7 0.7]);
 hold on
-plot(1:1:hor, zz, 'k-')
+plot(1:1:hor, zz, 'k-', 'HandleVisibility', 'off')
 hold on 
 plot(1:1:hor, liny(i,:), 'k','LineWidth', 1.5)
 title('Linear')
@@ -141,7 +141,7 @@ axis tight
 % -- Plot GDP Response -- %
 i=2;
 subplot(2,2,3)
-plot(1:1:hor, zz, 'k-') % plot line at y=0 to show x-axis
+plot(1:1:hor, zz, 'k-', 'HandleVisibility', 'off') % plot line at y=0 to show x-axis
 hold on
 
 h = zeros(1, length(irfTypes));
@@ -161,7 +161,7 @@ subplot(2,2,4)
 grpyat=[(1:1:hor)', confidencey(1,:,i)'; (hor:-1:1)' confidencey(2,hor:-1:1,i)'];
 patch(grpyat(:,1), grpyat(:,2), [0.7 0.7 0.7],'edgecolor', [0.7 0.7 0.7]);
 hold on
-plot(1:1:hor, zz, 'k-')
+plot(1:1:hor, zz, 'k-', 'HandleVisibility', 'off')
 hold on 
 plot(1:1:hor, liny(i,:), 'k','LineWidth', 1.5)
 title('Linear')
