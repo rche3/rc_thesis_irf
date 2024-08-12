@@ -17,7 +17,7 @@ recursive_shock = settings.est.recursive_shock;
 with_IV = settings.est.with_IV;
 
 include_proxy = settings.est.lpiv_controls_include_proxy;
-
+varlp_est_weights = settings.est.varlp_est_weights;
 
 if with_shock == 1
     normalize_with_shock_std_dev = settings.est.normalize_with_shock_std_dev;

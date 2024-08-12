@@ -63,21 +63,21 @@ lin_results = struct(); % struct to store linear model results
 % compute the IRFs now with various methods
 irfTypes = {'LP', 'LP_BC', 'LP_Penalised', 'LP_Lagaug', 'SVAR', 'VARLP_Avg'};
 
-% standard LP, code from RZ2018
-[lin_results.IRF.LP, lin_results.CI.LP]=linlp(data,x,hor,rpos,transformation, clevel, opt, 1); 
-liny = lin_results.IRF.LP;
-confidencey = lin_results.CI.LP;
+%% LP + Variants Estimation
+% standard LP
+[lin_results.IRF.LP, lin_results.CI.LP]=linlp(data,x,hor,rpos,transformation, clevel, opt, nlag, 1); liny = lin_results.IRF.LP; confidencey = lin_results.CI.LP;
 % bias correction
 [lin_results.IRF.LP_BC, lin_results.CI.LP_BC]=linlp_biascorrect(data,x,hor,rpos,transformation, clevel, opt);
 % penalised LP
 [lin_results.IRF.LP_Penalised, lin_results.CI.LP_Penalised]=linlp_penalised(data,x,hor,rpos,transformation, clevel, opt, nlag); 
 % lag-augmented LP
-[lin_results.IRF.LP_Lagaug, lin_results.CI.LP_Lagaug]=linlp_lagaug(data(2:end, :),x_la,hor,rpos,transformation, clevel, opt, 1);
+[lin_results.IRF.LP_Lagaug, lin_results.CI.LP_Lagaug]=linlp(data(2:end, :),x_la,hor,rpos,transformation, clevel, opt, nlag, 1); % lagaug uses same script, different regressor
+%% VARS
 % VAR
 [lin_results.IRF.SVAR, lin_results.CI.SVAR] = SVAR(data, x, hor, rpos, transformation, clevel, opt, nlag, 0);
 % VAR / LP Averaged (TBD)
 [lin_results.IRF.VARLP_Avg, lin_results.CI.VARLP_Avg] = VARLP_Avg(data, x, hor, rpos, transformation, clevel, opt, nlag, 0, 0);
-
+%%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %NON-LINEAR
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -98,11 +98,9 @@ end
 
 [stateay, stateby, confidenceya, confidenceyb]=statelp_rz(data,x,hor,rpost,transformation, clevel, opt); 
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Figures 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Figures
 run('setup.m') % load settings, colours etc. from this script
+close all
 
 % | Figure 5 - the IRFs to GDP and Gov. Spending, Linear Model ONLY |
 % -- Plot Gov Spending Response -- %
@@ -123,11 +121,9 @@ end
 
 axis tight
 ylabel('Government Spending')
-lgd = legend('Location', 'northwest');
-lgd.Interpreter = 'none'; 
+lgd = legend('Location', 'northwest'); lgd.Interpreter = 'none'; 
 
 % BELOW NEEDS TO BE FIXED ONCE S.E.s are done
-
 subplot(2,2,2)
 grpyat=[(1:1:hor)', confidencey(1,:,i)'; (hor:-1:1)' confidencey(2,hor:-1:1,i)'];
 patch(grpyat(:,1), grpyat(:,2), [0.7 0.7 0.7],'edgecolor', [0.7 0.7 0.7]);
@@ -153,8 +149,7 @@ end
 
 axis tight
 ylabel('GDP')
-lgd = legend('Location', 'northwest');
-lgd.Interpreter = 'none'; 
+lgd = legend('Location', 'northwest'); lgd.Interpreter = 'none'; 
 
 % BELOW NEEDS TO BE FIXED ONCE S.E.s are done
 subplot(2,2,4)
@@ -216,13 +211,14 @@ for j = 1:length(irfTypes)
     lin_results.cum_mult_CI.(irfType) = [lin_results.cum_mult.(irfType)+clevel*stdlin'; lin_results.cum_mult.(irfType)-clevel*stdlin'];
 end
 
-% Figure for multipliers
+% | Figure 6 - Multipliers, Linear Model ONLY |
 figure(6)
+
+plot_cols = 4; plot_rows = ceil(length(irfTypes)/plot_cols) + 1;
 
 for i = 1:length(irfTypes)
     irfType = irfTypes{i};
-    subplot(2,length(irfTypes),i)
-    
+    subplot(plot_rows, plot_cols, i)
     grpyat=[(1:1:hor)', lin_results.cum_mult_CI.(irfType)(1,:)'; (hor:-1:1)', lin_results.cum_mult_CI.(irfType)(2,hor:-1:1)']; % create matrix for the CIs (basically it ends up tracing 1 -> hor upper bounds, then back around hor -> 1 lower bounds)
     patch(grpyat(:,1), grpyat(:,2), patch_colors{i},'edgecolor', patch_colors{i}, 'DisplayName', strcat(irfType, ' CI')); % plot gray patch for CIs
     hold on 
@@ -234,7 +230,7 @@ for i = 1:length(irfTypes)
 end
 
 % state dependent plot
-subplot(2,length(irfTypes),5)
+subplot(plot_rows, plot_cols, (plot_rows-1)*plot_cols + 1)
 grpyat=[(1:1:hor)', multconfa(1,:)'; (hor:-1:1)' multconfa(2,hor:-1:1)'];
 patch(grpyat(:,1), grpyat(:,2), [0.7 0.7 0.7],'edgecolor', [0.7 0.7 0.7]);
 hold on 

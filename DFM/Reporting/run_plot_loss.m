@@ -21,9 +21,9 @@ lags_select    = 2; % options: 1 (AIC), 2 (4 lags), 3 (8 lags), 4 (12 lags)
 exper_select_group = {[2,5], [3,6], [1,4]}; % combine G and MP for observed shock, recursive, and IV
 
 % select estimation methods for each experiment
-methods_iv_select        = [1 2 3 4 5 6 7 8 9 10 11 12];
-methods_obsshock_select  = [1 2 3 4 5 6 7 8 9];
-methods_recursive_select = [1 2 3 4 5 6 7 8 9];
+methods_iv_select        = [1 2 3 4 5 6 7 8 9 10 11 12 13];
+methods_obsshock_select  = [1 2 3 4 5 6 7 8 9 10];
+methods_recursive_select = [1 2 3 4 5 6 7 8 9 10];
 
 % methods_iv_select        = [1 2 3 4 5 6 7 8]; 
 % methods_obsshock_select  = [1 2 3 4 5 6 7];
@@ -132,7 +132,6 @@ for n_mode=1:length(mode_folders) % For each robustness check mode...
     
             the_methods_index = cellfun(@(x) find(strcmp(res.settings.est.methods_name, x)),  methods_fields{ne}, 'UniformOutput',false); % index of each method
             the_methods_index = cell2mat(the_methods_index);
-            disp(the_methods_index)
             for j=1:length(the_objects)
                 
                 the_result = sqrt(extract_struct(res.results.(the_objects{j})));

@@ -24,7 +24,7 @@ tic;
 
 spec_id = 1; % seed for random draws of specifications (= DGPs from encompassing model)
 % dgp_type = 'G'; % structural shock: either 'G' or 'MP'
-% estimand_type = 'IV'; % structural estimand: either 'ObsShock', 'Recursive', or 'IV'
+% estimand_type = 'ObsShock'; % structural estimand: either 'ObsShock', 'Recursive', or 'IV'
 lag_type = 4; % No. of lags to impose in estimation, or NaN (= AIC)
 mode_type = 1; % robustness check mode:
                % 1 (baseline), 2 (small sample), 3 (large sample),
@@ -254,33 +254,39 @@ parfor i_MC = 1:settings.simul.n_MC
                     [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec), temp_weight_var_avg(:,:,i_spec), temp_submodel_irf_var_avg(:,:,i_spec)]...
                         = VAR_avg_est(data_sim_select,settings);
 
+                case 'lp_lagaug' % shrinkage LP
+                    [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec)]...
+                        = LP_lagaug_est(data_sim_select,settings, 0);
+
+                case 'lp_gls' % LP GLS using Lusompa (2023) method
+                    [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec)]...
+                        = LP_GLS_est(data_sim_select,settings);
+
+                case 'varlp_avg' % LP averaged estimator
+                    [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec),temp_largest_root_svar(i_spec),...
+                        temp_LM_stat_svar(i_spec),temp_LM_pvalue_svar(i_spec),...
+                        temp_Hausman_stat_svar(i_spec),temp_Hausman_pvalue_svar(i_spec),...
+                        temp_Granger_stat_svar(i_spec),temp_Granger_pvalue_svar(i_spec)]...
+                        = VARLP_avg_est(data_sim_select,settings,0);
+
                 case 'svar_iv' % SVAR-IV       
                     [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec),...
                         temp_F_stat_svar_iv(i_spec),temp_F_pvalue_svar_iv(i_spec)]...
                         = SVAR_IV_est(data_sim_select,settings);
 
-                case 'lp_lagaug' % shrinkage LP
-                    [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec)]...
-                        = LP_lagaug_est(data_sim_select,settings, 0);
-                
-                case 'lp_gls' % LP GLS using Lusompa (2023) method
-                    [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec)]...
-                        = LP_GLS_est(data_sim_select,settings);
-
                 case 'residual' % residual-based estimator   
                     [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec)]...
                         = resid_est(data_sim_select,settings);
                 
-                case 'lp_IV_controls' % LP
+                case 'lp_IV_controls' % LP-IV with extra controls
                     [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec)]...
                         = LP_IV_controls_est(data_sim_select,settings);
+                
             end
             
         end
         
     end
-
-    
     
     %----------------------------------------------------------------
     % Move Results to Permanent Storage in parfor
@@ -304,9 +310,6 @@ parfor i_MC = 1:settings.simul.n_MC
     results_F_pvalue_svar_iv(i_MC,:) = temp_F_pvalue_svar_iv;
 
 end
-
-save(['/Users/rogerchen/Documents/MATLAB/rc_thesis_irf/Temp/' 'results_irf_save'], 'results_irf')
-% clear temporary storage
 
 clear temp_* i_MC i_spec data_sim_all data_sim_select i_method
 

@@ -4,7 +4,7 @@ function plot_loss(horzs, results, add_line, plot_name, plot_legend, font_size, 
     % settings
 
     line_colors = repmat([lines(7); 0.5 0.5 0.5],2,1);
-    colors_indx = [4 3 1 2 8 5 6 7 9 10 11 12];
+    colors_indx = [4 3 1 2 8 5 6 7 9 10 11 12 13];
     line_colors = line_colors(colors_indx,:);
     line_styles = {'-', '--', '-x', '-', '.-', '-.', '-o', ':', ':o', ...
                '-s', '--s', ':s', '-.s', ...
