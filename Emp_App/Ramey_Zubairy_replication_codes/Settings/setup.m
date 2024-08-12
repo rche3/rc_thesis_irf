@@ -15,7 +15,7 @@ patch_colors = {
     [1, 0.8, 0.8],   % Light Red
     [0.8, 0.8, 1],   % Light Blue
     [0.8, 1, 0.8],   % Light Green
-    [1, 0.8, 1],     % Light Purple
+    [0.7, 0.6, 0.8], % Light Purple
     [1, 0.9, 0.8],   % Light Orange
     [0.8, 1, 1],     % Light Teal
     [1, 0.8, 1]      % Light Magenta

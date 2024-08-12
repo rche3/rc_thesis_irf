@@ -81,7 +81,6 @@ settings = res.settings;
 results = res.results;
 
 % Compute bias2, variance based on summary statistics
-
 [results.MSE, results.BIAS2, results.VCE] = irf_perform_summary(results.irf, DF_model.target_irf, settings);
 
 %% SAVE ALL THE RESULTS

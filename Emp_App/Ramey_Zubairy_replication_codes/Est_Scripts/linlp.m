@@ -1,9 +1,14 @@
-function [liny,confidencey]=linlp(data,x,hor,rpos,transformation, clevel, opt, bootstrap) 
+function [liny,confidencey]=linlp(data,x,hor,rpos,transformation, clevel, opt, nlag, bootstrap) 
 
 % code based on Ramey and Zubairy original - edited to allow for
 % bootstrapped SEs
 [dr,dsize]=size(data);
 for j=1:dsize
+    if j == 1
+        y_pos_control = 3; % rgov is ordered 3rd in the control vector
+    else
+        y_pos_control = 2; % rgdp is ordered 2nd in the control vector
+    end
     [r,nnn]=size(x);
     for i=1:hor
         if transformation==1
@@ -14,18 +19,14 @@ for j=1:dsize
 
         results=nwest(yy, x(1:end-i+1,:),i);
         reglin(:,i)=results.beta;
-        
-        % disp(i)
-        % disp(yy(30:50))
-        % xx = x(1:end-i+1, :);
-        % disp(round(xx(30:50, rpos), 4))
 
         % compute SEs
         if bootstrap == 1
             % bootstrapped SEs
-            se(:, i) = lp_bserrors(results.resid, yy, x(1: end-i +1, :), results.beta);
+            [bs_beta_se, ~] = lp_bserrors(results.resid, yy, x(1: end-i +1, :), results.beta, i, nlag, y_pos_control);
+            se(:, i) = bs_beta_se;
         else
-            % standard analytic SE
+            % standard analytic SE,
             if opt==0
                 se(:,i)=results.se';
             else

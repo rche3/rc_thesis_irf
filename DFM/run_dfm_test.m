@@ -87,10 +87,8 @@ DF_model.trans_code = DFM_estimate.bptcodevec; % transformation code
 %----------------------------------------------------------------
 
 if strcmp(estimand_type, 'IV')
-
     DF_model.IV.rho_grid = DF_model.IV.rho * settings.est.IV.IV_persistence_scale;
     DF_model.IV.sigma_v_grid = DF_model.IV.sigma_v * settings.est.IV.IV_strength_scale;
-
 end
 
 %----------------------------------------------------------------

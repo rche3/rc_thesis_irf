@@ -90,4 +90,3 @@ results.rbar = 1 - (rsqr1/rsqr2); % rbar-squared
 ediff = results.resid(2:nobs) - results.resid(1:nobs-1); 
 results.dw = diag((ediff'*ediff)./(sigu))'; % durbin-watson 
 results.se=nwerr;
- 

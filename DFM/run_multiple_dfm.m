@@ -1,10 +1,8 @@
 
-% estimand_vars = {'ObsShock', 'Recursive', 'IV'};
-estimand_vars = {'IV'};
+estimand_vars = {'ObsShock', 'Recursive', 'IV'};
 
 % Define the values for the DGP types
 dgp_types = {'G', 'MP'};
-% dgp_types = {'G'};
 
 % Iterate over all combinations of estimand variables and DGP types
 for i = 1:length(estimand_vars)
