@@ -68,6 +68,7 @@ rgov_pot=ngov./potgdp./pgdp;
 taxy=ntax./ngdp;
 defy=def./ngdp;
 
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %IMPORTANT INPUT (threshold for the unemployment rate)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -65,6 +65,14 @@ lrgov=log(ngov./totpop./pgdp);
 lrtax=log(ntax./totpop./pgdp);
 rgdp_pot=realgdp./potgdp;
 rgov_pot=ngov./potgdp./pgdp;
+% difference the real gdp and gov spending as a multiple of potential gdp
+if datafirstdiff == 1
+    rgdp_pot = diff(rgdp_pot, 1);
+    rgov_pot = diff(rgov_pot, 1);
+    pdvmily = pdvmily(2:end);
+else
+    % pass
+end
 taxy=ntax./ngdp;
 defy=def./ngdp;
 
@@ -91,10 +99,10 @@ elseif statechoice==6
     threshold=1;
 end
 
-rrr=find(state>=threshold); 
+rrr=find(state>=threshold); % returns the indices of the state variable that exceed threshold
 rrrn=rrr+1; %Since unemployment above threshold in the previous period is the criterion
 if rrrn(end)==length(unemp)+1
-    rrrn=rrrn(1:end-1);
+    rrrn=rrrn(1:end-1); % truncate if it happens that the final period is a exceeding state
 else
     rrrn=rrrn;
 end
@@ -180,3 +188,9 @@ elseif transformation==2
     data=[rgov(nlag+0:end), rgdp(nlag+0:end)];
 end
 
+%%% create variable for TVAR
+if transformation==1
+    y_tvar = [pdvmily, rgov_pot, rgdp_pot]; % order as shock, gov, gdp
+elseif transformation==2
+    y_tvar =[pdvmil, rgov, rgdp];
+end
