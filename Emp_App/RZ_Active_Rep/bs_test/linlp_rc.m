@@ -10,7 +10,7 @@ for j=1:dsize
     end
     [r,nnn]=size(x);
     for i=1:hor
-        disp([j, i])
+        disp([j, i]);
         if transformation==1
             yy=data(i:end,j);
         elseif transformation==2
@@ -23,7 +23,8 @@ for j=1:dsize
         % compute SEs
         if bootstrap == 1
 %             [bs_beta_se, bs_beta_mean] = compute_bootstrap_se1(results.resid, yy, x(1: end-i +1, :), results.beta);
-            [bs_beta_se, bs_beta_mean] = compute_bootstrap_se(results.resid, yy, x(1: end-i +1, :), results.beta, i, nlag, y_pos_control, wild);
+            [bs_beta_se, bs_beta_mean] = compute_dwb_se(results.resid, yy, x(1: end-i +1, :), results.beta, i, nlag, y_pos_control, wild);
+%             [bs_beta_se, bs_beta_mean] = copute_bootstrap_se(results.resid, yy, x(1: end-i +1, :), results.beta, i, nlag, y_pos_control, wild);
 %             [bs_beta_se, bs_beta_mean] = compute_bootstrap_se_plain(results.resid, yy, x(1: end-i +1, :), results.beta);
 %             [bs_beta_se, bs_beta_mean] = compute_block_bootstrap_se(results.resid, yy, x(1: end-i +1, :), results.beta, i, nlag, y_pos_control);
 %             [bs_beta_se, bs_beta_mean] = compute_block_bootstrap_se1(results.resid, yy, x(1: end-i +1, :), results.beta);

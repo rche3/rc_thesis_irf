@@ -56,10 +56,8 @@ for i=1:nvar;
 emat = [emat 
         results.resid']; 
 end;
-disp(size(emat))
 
 hhat=emat.*x'; 
-disp(size(hhat))
 G=zeros(nvar,nvar); w=zeros(2*nlag+1,1); 
 a=0; 
 
@@ -93,6 +91,13 @@ results.dw = diag((ediff'*ediff)./(sigu))'; % durbin-watson
 results.se=nwerr;
 
 %%% overrides SEs with se estimator WITHOUT Newey-west correction
-% average_resid = (1/length(results.resid)) * sum(results.resid.^2);
-% var_beta = average_resid * inv(x'*x);
-% results.se = diag(var_beta).^(1/2);
+average_resid = (1/length(results.resid)) * sum(results.resid.^2);
+var_beta = average_resid * inv(x'*x);
+
+%%% overrides SEs with Eicker-White HCCME
+Sigma_hat = diag(results.resid.^2);
+var_beta = inv(x'*x)*x'*Sigma_hat*x*inv(x'*x);
+
+% variance to se
+results.se = diag(var_beta).^(1/2);
+

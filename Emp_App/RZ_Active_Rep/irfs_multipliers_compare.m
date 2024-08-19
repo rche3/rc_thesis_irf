@@ -13,6 +13,7 @@ statechoice=1;  % 1 means default unemp threshold; 2 means default ZLB threshold
 shockchoice=1; % 1 means news shock; 2 means BP shock
 transformation=1; % 1 means Gordon-Krenn; 2 means Hall-Barro-Redlick
 taxchoice=0; %0 means no taxes as control; 1 means ad taxy as a control
+datafirstdiff = 0; % to difference the GDP / Gov Spending Data
 
 trend=0; %4 means quartic; 2 means quadratic; 0 means no trend  
 nlag=4;% number of lags of control variables

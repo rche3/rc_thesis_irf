@@ -14,13 +14,15 @@ for j=1:dsize
         regy(:,i)=results.beta;
         
         if opt==0
-            se(:,i)=results.se';
+        se(:,i)=results.se';
         else
-            [EstCov, hacse, coeff]=hac_alt(x(1:end-i+1,:), yy, 'intercept', false, 'smallT', false, 'display', 'off'); 
-            se(:,i)=hacse';
+        [EstCov, hacse, coeff]=hac_alt(x(1:end-i+1,:), yy, 'intercept', false, 'smallT', false, 'display', 'off'); 
+        se(:,i)=hacse';
         end
+        
+       
+
     end
-    
     seay=se(rpost,:);
     seby=se(rpost+1,:);
     stateay(j,:)=regy(rpost,:);

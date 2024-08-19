@@ -1,4 +1,4 @@
-function [bs_beta_se, bs_beta_mean] = compute_bootstrap_se(resid, y, x, beta, h, nlag, y_pos_control, wild)
+function [bs_beta_se, bs_beta_mean] = compute_dwb_se(resid, y, x, beta, h, nlag, y_pos_control, wild)
 % COMPUTE_BOOTSTRAP_SE Summary of this function goes here
 % Returns the bootstrapped standard errors for each beta in the LP
 % regression given horizon, observations, Newey-West residuals
@@ -20,14 +20,16 @@ beta_bs = nan(size(beta, 1), bs_samples);
 T = T_resid - h - nlag; % our effective "T" which will be the length of the bootstrapped dependent variable
 y_bs = zeros(T, 1);
 
-% wild bootstrap settings
-e1 = (-sqrt(5)-1)/2;
-e2 = (sqrt(5)+1)/2;
-p1 = (sqrt(5)+1)/(2*sqrt(5));
-p2 = 1-p1;
+% DWB bootstrap settings
+e1 = (-sqrt(5)-1)/2; e2 = (sqrt(5)+1)/2;
+p1 = (sqrt(5)+1)/(2*sqrt(5)); p2 = 1-p1;
+% e1 = 1; e2 = -1;
+% p1 = 0.5; p2 = 0.5;
 values = [e1, e2];
 probabilities = [p1, p2];
 num_samples = T;
+wild_settings = [values; probabilities];
+
 
 % create residual bootstrap samples
 
@@ -38,22 +40,14 @@ for j = 1:bs_samples
     % create the bootstrap dependent variable
     x_temp = x; % this is a temporary x variable which will become iteratively updated, initialised as our regressor matrix
 
-    % create the wild bootstrap errors
-    wild_errors = disc_rv(values, probabilities, num_samples); % randomly sampled from discrete pd
-
-    % DWB residuals / disturbances
-    
+    % create the DWB residuals
+    dwb_innov = generate_dwb_resid(resid_sample, nlag, wild_settings);
 
     for i = 1:T
         x_temp = x;
         
         % compute and store y_bs variables
-        if wild == 1
-            resid = resid_sample(i) * wild_errors(i);
-        else
-            resid = resid_sample(i);
-        end
-        y_bs(i) = x_temp(i, :) * beta + resid; 
+        y_bs(i) = x_temp(i, :) * beta + dwb_innov(i); 
         controls = x_temp(:, 3:end);
         controls(i, y_pos_control) = y_bs(i); % each y_bs should override the control in x_temp
         
