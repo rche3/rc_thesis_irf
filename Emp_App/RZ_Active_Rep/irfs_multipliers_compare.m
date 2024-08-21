@@ -98,6 +98,67 @@ elseif trend==0 %no trend
 end
 
 [stateay, stateby, confidenceya, confidenceyb]=statelp_rz(data,x,hor,rpost,transformation, clevel, opt); 
+%% Temp figures, just IRF and multipliers
+run('setup.m')
+close all
+
+irf_fig = figure('Position', [100, 100, 800, 600])
+i=1;
+zz = zeros(1, hor);
+n = length(irfTypes);
+subplot(2,1,1)
+plot(1:1:hor, zz, 'k-', 'HandleVisibility', 'off') % plot line at y=0 to show x-axis
+hold on
+h = zeros(1, n);
+for j = 1:length(irfTypes)
+    irfType = irfTypes{j};
+    h(j) = plot(1:hor, lin_results.IRF.(irfType)(i,:), plotStyles{j}{:}, 'DisplayName', irfType);
+    hold on;
+end
+axis tight
+ylabel('Government Spending')
+lgd = legend('Location', 'northeast'); lgd.Interpreter = 'none'; 
+
+
+i=2;
+subplot(2,1,2)
+plot(1:1:hor, zz, 'k-', 'HandleVisibility', 'off') % plot line at y=0 to show x-axis
+hold on
+
+h = zeros(1, length(irfTypes));
+for k = 1:length(irfTypes)
+    irfType = irfTypes{k};
+    h(k) = plot(1:hor, lin_results.IRF.(irfType)(i,:), plotStyles{k}{:}, 'DisplayName', irfType);
+    hold on;
+end
+
+axis tight
+ylabel('GDP')
+lgd = legend('Location', 'northeast'); lgd.Interpreter = 'none'; 
+
+sgtitle('Impulse responses to GDP and Government spending for a military news shock')
+
+saveas(irf_fig, 'irf_estimates.png')
+%% Poster figures - multipliers
+for j = 1:length(irfTypes)
+    irfType = irfTypes{j};
+    lin_results.cum_mult.(irfType) = cumsum(lin_results.IRF.(irfType)(2, :)) ./ cumsum(lin_results.IRF.(irfType)(1, :));
+end
+
+figure(6)
+
+plot_cols = 4; plot_rows = ceil(length(irfTypes)/plot_cols);
+
+for i = 1:length(irfTypes)
+    irfType = irfTypes{i};
+    subplot(plot_rows, plot_cols, i)
+    hold on 
+    plot(1:1:hor, lin_results.cum_mult.(irfType), 'Color', line_colors{i}, 'LineWidth', 1.5, 'DisplayName', irfType); % plot point estimates for multiplier
+    axis tight
+    legend('Location', 'east')
+end
+
+sgtitle('Linear model: cumulative spending multiplier (point estimates) with different estimators');
 
 %% Figures
 run('setup.m') % load settings, colours etc. from this script
