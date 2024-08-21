@@ -23,7 +23,7 @@ function [liny,confidencey] = SVAR(data,x,hor,rpos,transformation, clevel, opt, 
         ShockVector = G(:,recursiveShock);
     
         % estimate IRF
-        IRF = IRF_SVAR(By,ShockVector,hor-1); % IRF to one unit of shock
+        IRF = IRF_SVAR(By,ShockVector,hor); % IRF to one unit of shock
         IRF = IRF(responseV,:) / IRF(normalizeV,1); % normalize by response of normalization variable
 
         % get SEs - PLACEHOLDER, NEED FIX

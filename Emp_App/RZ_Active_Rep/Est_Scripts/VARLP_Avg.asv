@@ -5,8 +5,8 @@ function [liny, confidencey] = VARLP_Avg(data,x,hor,rpos,transformation, clevel,
     [irf_var, ~] = SVAR(data,x,hor,rpos,transformation, clevel, opt, nlag, bias_corrected);
     [irf_lp, ~] = linlp(data,x,hor,rpos,transformation, clevel, opt, nlag, bootstrap);
 
-%     disp(irf_var)
-%     disp(irf_lp)
+    disp(irf_var)
+    disp(irf_lp)
     
     % S.E. TBD
     var_weight = 0.5;

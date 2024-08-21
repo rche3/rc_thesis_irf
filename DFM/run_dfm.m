@@ -254,7 +254,7 @@ parfor i_MC = 1:settings.simul.n_MC
                     [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec), temp_weight_var_avg(:,:,i_spec), temp_submodel_irf_var_avg(:,:,i_spec)]...
                         = VAR_avg_est(data_sim_select,settings);
 
-                case 'lp_lagaug' % shrinkage LP
+                case 'lp_lagaug' % lag-augmented LP
                     [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec)]...
                         = LP_lagaug_est(data_sim_select,settings, 0);
 

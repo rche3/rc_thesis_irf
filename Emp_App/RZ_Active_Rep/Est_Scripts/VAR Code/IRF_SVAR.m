@@ -3,7 +3,7 @@ function [irf] = IRF_SVAR(By,ShockVector,nhorizons)
 
 nv = size(By,1);
 nlags = size(By,3);
-irf = zeros(nv,nhorizons + 1);
+irf = zeros(nv,nhorizons);
 irf(:,1) = ShockVector; % IRF at horizon 0
 
 % iterate thru horizon 1 to horizon max

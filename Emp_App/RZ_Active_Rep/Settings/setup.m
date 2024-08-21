@@ -26,12 +26,9 @@ plotStyles = {
     {'r--', 'LineWidth', 1.2},    % Dashed red line
     {'g-.', 'LineWidth', 1.2},    % Dash-dot green line
     {'m:', 'LineWidth', 1.2},     % Dotted magenta line
-    {'k-', 'LineWidth', 1.5},     % Thick solid black line
-    {'c--', 'LineWidth', 1.0},    % Thin dashed cyan line
+    {'k--', 'LineWidth', 1.2},     % Thick solid black line
+    {'m-', 'LineStyle', '-', 'LineWidth', 1.5},  % magenta
     {'y-.', 'LineWidth', 1.3},    % Medium dash-dot yellow line
-    {'[0.5 0.5 0.5]', 'LineStyle', '-', 'LineWidth', 1.2},  % Solid gray line
-    {'[0.8 0.4 0]', 'LineStyle', '--', 'LineWidth', 1.2},   % Dashed orange line
-    {'[0 0.5 0]', 'LineStyle', ':', 'LineWidth', 1.4}       % Thick dotted dark green line
 };
 
 set(0, 'DefaultTextInterpreter', 'none');
