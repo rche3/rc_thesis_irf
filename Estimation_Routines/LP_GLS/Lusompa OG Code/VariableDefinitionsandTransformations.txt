@@ -1,0 +1,63 @@
+===========================================================================
+DESCRIPTION
+This file describes the data files and transformations used in the empirical VARs in 
+the "Monte Carlo" section of the paper as well as the "Empirical Application" in the "Online Appendix".
+All files can be found in the "Data" folder.
+
+---------------------------------------------------------------------------
+
+Data from the Gertler and Karadi empirical application same data used in Ramey (2016) handbook chapter
+"Macroeconomic Shocks and Their Propagation" (link to paper: https://www.sciencedirect.com/science/article/pii/S1574004816000045). 
+The excel files can be found in the "Data" folder and can also be downloaded from  Ramey's repository link: 
+https://econweb.ucsd.edu/~vramey/research/Ramey_HOM_monetary.zipDATESGertler and Karadi (2015) Data (can be found in the GKData.csv)
+LIP         log of industrial productionLCPI        log of CPIMP1_TC      Gertler-Karadi monthly shocks, current futuresFF4_TC      Gertler-Karadi monthly shocks, fed funds futures 3 months from nowGS1         One-year government tbill rateEBP         Gilchrist-Zakrajsek spread
+
+
+
+
+
+
+Data used for the Technology VAR Monte Carlos are the same data used in Ramey (2016) handbook chapter
+"Macroeconomic Shocks and Their Propagation". The excel files can be found in the "Data" folder and can also be downloaded from  
+Ramey's repository link: https://econweb.ucsd.edu/~vramey/research/Ramey_HOM_technology.zipOriginal Technology VAR Monte Carlo Data (can be found in the Technology_VAR_Data.csv)
+			
+ngdp	    nominal GDP		
+rgdp	    real GDP		
+pgdp	    GDP deflator		
+ltfp_util   log TFP - utilization adjusted, Fernald series		
+pop	    total population		
+stockp_sh   stock prices, from Shiller		
+
+
+	
+Transformed Data in Technology Shock Data MC.mat file (Technology_VAR_Data_Transformation.m will do the transformations from the original data)
+
+realgdppercapitagrowth             real GDP per capita growth is the first difference of log(rgdp/pop)
+realstockpricespercapitagrowth     real stock prices per capita growth is the first difference of log(stockp_sh/pgdp*pop)
+laborproductivitygrowth            labor productivity growth is the first difference of log(rgdp/tothours)
+techshockgrowth                    Fernald’s (2014) utilization-adjusted TFP growth is the first difference of ltfp_util
+		
+
+
+
+
+
+Data used for the Fiscal VAR Monte Carlos are the same series used in Ramey (2019) "Ten Years After the Financial Crisis: 
+What Have We Learned from the Renaissance in Fiscal Research?", but are a more recent vintage. The data is from the 12-22-2020 vintage and can 
+be found on alfred.stlouisfed.org.
+
+
+Original Fiscal VAR Monte Carlo Data (can be found in the Fiscal_VAR_Data.csv)
+
+ngov        nominal government purchases, post-1947 is FRED series GCE
+pgdp	    GDP implicit price deflator, post-1947 is FRED series GDPDEF
+ngdp	    nominal GDP, post-1947 sample is FRED series GDP
+pop	    total population all ages, including armed forces overseas, FRED series POP
+
+
+Transformed Data in Fiscal Policy Data MC.mat file (Fiscal_VAR_Data_Transformation.m will do the transformations from the original data)
+
+RGDPPCGrowth                       real GDP per capita growth is the first difference of log(ngdp/pop*pgdp)
+RSpendPCGrowth                     real spending per capita growth is the first difference of log(ngov/pop*pgdp)
+===========================================================================
+

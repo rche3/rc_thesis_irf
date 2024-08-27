@@ -1,0 +1,221 @@
+
+
+/*longhor1
+Based on West (2015) "Approximate Bias in Time Series Regression."
+
+Compute bias adjustment for long horizon regression nq periods ahead on lags 1 to nk of a regessor.  Invoked via
+
+        execute longhor1 yseries xseries first last nq nk nar vbias betahat betahat_adj
+
+Passed by user:
+
+yseries         univariate series for lhs variable
+xseries         univariate series for rhs variable(s).  Usually referred to as "x" in the description below.
+first           integer start date for regression
+last            integer end date for regression
+nq              integer horizon, nq>=0
+nk              integer number of lags of xseries to include on the rhs of the regression
+nar             integer number of lags to include in estimating an AR model for xseries (needed
+                to compute the bias)
+
+Returned to user:
+
+vbias           nkx1 vector, numerator of bias to order T (called "b" in the paper)
+bethat          nkx1 vector of regression coefficients
+bethat_adj      nkx1 vector, bias adjusted betahat, betahat_adj = betahat - (vbias/T)
+
+The regression of interest is yseries, nq periods ahead, on lags 1 to nk of xseries:
+
+(*)       yseries(t+nq) = const. + beta1*x(t-1) + ... + beta_nk*x(t-nk) + residual(t+nq)
+
+where "x" is short for the parameter "xseries".  The regression is run with yseries dates running from first to last,
+i.e., with dates on x(t-1) running from first-nq-1 to last-nq-1.  The user specifies nq, first, last and nk.  (Warning:
+if you use the print option on linreg, it will look as if the sample on the lhs variable runs from first-nq to last-nq.
+See point 6 below.)
+
+Notes:
+
+1. The routine invokes procedures proc_vb_ma0, proc_vb_maq and proc_vbias, so these must be accesible from the program.
+
+2. The lhs variable may be a cumulated sum (yseries(t+nq) = dz(t)+dz(t+1)+...+dz(t+nq) (for a stationary series dz) or
+point in time.  If a cumulated sum, the user needs to appropriately construct yseries before invoking the routine.
+
+3. Obviously, (*) assumes that data on x(t) are available from observations first-nq-nk through last-nq-1.  But if
+data on x are also available from last-nq through last, the code will use that data as described in the next point.
+
+4. Within the routine, the moments necessary to compute bias rely in part from a univariate AR in x(t) of order nar.  The user
+specifies nar; the routine estimates the autoregression. The code decides what sample to use in running the AR, via the
+following algorithm.  The sample runs from "firstx" and "lastx", defined as:
+
+a. firstx: (1)If nar<nk, the first date for x(t) on the lhs of the autoregression is firstx=first-nq-1, which is also the date of first
+observation on x(t-1) in regression (*).
+(2)If nar>=nk, the date becomes firstx=first-nq+(nar-nk).
+b. lastx: (1)If data on x are available in period "last", lastx=last. (Checked by seeing whether xseries(last)=%NA.)
+(2)If data on x(t) are not available in period "last", lastx=last-nq-1 -- that is, only use data on x also used in estimating
+regression (*).
+c. Obviously these dates can be adjusted, for example if one wants to experiment with different nar but wants the sample to
+be the same for all nar.
+
+5. The code assumes that the population disturbance is orthogonal to lagged x's and that the cumulants are zero.  The
+latter conditions rules out the disturbance being conditionally heteroskedastic or skewed.  See West (2015) on how to
+estimate bias in such a case.
+
+6. To better map into the notation of the paper:  The code defines
+                     yy(t) = yseries(t+nq)
+With this definition, the dating of the lhs variable yy(t) matches West (2015). Thus, for nar>=1, nk>=1, regress
+
+         yy(t) = const. + beta1*x(t-1) + ... + beta_nk*x(t-nk) + eta(t)
+         x(t)  = const. + phi1*x(t-1) + ... + phi_nar*x(t-nar) + u(t)
+
+Note that, as in the paper, with this dating, eta(t) is actually realized in period t+nq.  To clarify: the parameters first and last
+passed by the user are the first and last observation dates on yseries (NOT yy).
+
+7. The work in computing bias is done by external routines proc_vb_ma0 (if nq=0) or proc_vb_maq (if nq>0). These routines require that the AR
+referenced in the previous point be written in companion form
+
+        Ztwid(t) = const. + phitwid*Ztwid(t-1) + Utwid(t), VCV of Utwid = omegaUtwid
+
+The dimension of Ztwid is nZtwid by 1, with nZtwid = nar.
+
+8. The code is largely undocumented.  But variable names map into the notation of West (2015) and other routines in a straightforward
+way.  The document "proc_vbias_basics" may be helpful in this respect.  As well, for readability, the code uses standard RATS
+instructions in places where direct matrix computations would probably be more efficient, e.g., "stat" is used to compute a mean.
+
+
+*/
+
+procedure longhor1 yseries xseries first last nq nk nar vbias betahat betahat_adj
+
+type series yseries xseries
+type integer first last nq nk nar
+type vector *vbias *betahat *betahat_adj
+
+/*
+the code proceeds in the following order
+(A)setup some parameters and variables
+(B)estimate AR of order nar for x, construct companion form matrices phitwid and omegaUtwid
+(C)estimate the regression of yseries(t+nq) on x(t-1),...,x(t-nk)
+(D)compute EXeta and EetaZtwid, which are used in computing bias
+(E)comput bias, using external procedures proc_vb_ma0 (nq=0) or proc_vb_maq (nq>0)
+*/
+********
+*(A)set up some parameters and variables
+decl int firstx lastx idebug
+*set idebug=0; idebug=1 outputs results various intermediate quantities
+comp idebug=0
+
+*if nar > nk, need to extend variables in companion form to include all those on rhs of equation
+*if nar >= nk, also need to adjust start date for AR to make sure data on initial lags are available
+if nar .ge. nk; begin
+  comp nZtwid=nar
+  comp firstx=first-nq+(nar-nk)
+end; else; begin
+  comp nZtwid = nk
+  comp firstx=first-nq-1
+end if
+
+if xseries(last) .eq. %NA
+  comp lastx = last-nq-1
+else
+  comp lastx=last
+
+decl rect phitwid(nZtwid,nZtwid) omegaUtwid(nZtwid,nZtwid) PX(nk,nZtwid)
+decl vect[rect] EetaZtwid(nq+1)
+*phinow will end up being the first row of phitwid.  some fiddling is required to accommodate nar<nk.
+decl vect EXeta(nk) phinow(nZtwid)
+dim betahat(nk) betahat_adj(nk) vbias(nk)
+do iq=1,nq+1
+ dim EetaZtwid(iq)(1,nZtwid)
+end do
+
+set yy = yseries(t+nq)
+
+comp omegaUtwid = %const(0.), phinow=%const(0.)
+
+comp PX = %const(0.), phinow=%const(0.)
+do ik=1,nk
+  comp PX(ik,ik) = 1.0
+end do
+
+********
+*(B)estimate AR of order nar for x, then use estimates to construct companion form
+
+linreg(noprint) xseries firstx lastx uresid
+#constant xseries{1 to nar}
+
+*note that if nar<nk, the last nk-nar elements of phinow will be zero
+do ii=1,nar
+  comp phinow(ii) = %beta(ii+1)
+end do
+*set up VCV of VAR disturbance and set up VAR coefficients, in the companion form
+*don't use degrees of freedom adjustment in computing variance of residual, to be consistent with documentation
+comp omegaUtwid(1,1) = %rss/%nobs
+if nZtwid .gt. 1
+ comp phitwid =  tr(phinow) ~~ $
+                (%identity(nZtwid-1) ~ %zeros(nZtwid-1,1))
+else
+  comp phitwid(1,1) = phinow(1)
+if idebug .eq. 1
+   disp "longhor1: PX phitwid omegaUtwid" PX phitwid omegaUtwid
+
+********
+*(C)estimate the regression of interest
+linreg(noprint) yy first-nq last-nq eta
+#constant xseries{1 to nk}
+comp Tnow=float(%nobs)
+do ii=1,nk
+  comp betahat(ii) = %beta(ii+1)
+end do
+
+********
+*compute EXeta and EetaZtwid, which include moments necessary to estimate bias
+*should have been able to do this simply via cross(covariances,nocenter) but that didn't work
+*xsum(t) = x(t)+x(t+1)+...+x(t+nq-1)
+set xsum first-nq-nk+1 lastx = 0.
+do iq=0,nq
+  if iq .ne. nq
+     set xsum first-nq-nk+1 lastx = xsum(t) + xseries(t+iq)
+  do iz=1,nZtwid
+     set etaZ first-nq lastx-nq = eta(t)*xseries(t-iz+1+iq)
+     stat(noprint) etaZ first-nq lastx-nq
+     comp EetaZtwid(iq+1)(1,iz) = %mean
+  end do
+end do
+*print(dates) first-nk-nq first+5 xsum eta xseries etaZ
+do ik=1,nk
+   set etaxsum first-nq lastx = eta(t)*xsum(t-ik+1)
+   stat(noprint) etaxsum first-nq lastx
+   comp EXeta(ik) = %mean
+end do
+*/*
+if idebug .eq. 1; begin
+  disp "longhor1:"
+  disp $
+  "nar @10 nk @16 nq @23 nZtwid @34 firstx @45 lastx @55 first-nq @68 lastx-nq @81 first-nq-nk+1"
+  disp $
+  nar @10 nk @16 nq @23 nZtwid @34 firstx @45 lastx @55 first-nq @68 lastx-nq @81 first-nq-nk+1
+  print(dates) first-nq first-nq+5 etaxsum eta xsum
+  disp "EetaZtwid(1)" EetaZtwid(1)
+  disp "EetaZtwid(2)" EetaZtwid(2)
+  disp "EXeta" EXeta
+end begin
+*/
+
+********
+*(E)compute bias
+if nq .eq. 0; begin
+   comp EetaZtwid0 = EetaZtwid(1)
+   execute proc_vb_ma0 nZtwid phitwid omegaUtwid nk PX EetaZtwid0 vbias
+end; else
+  execute proc_vb_maq nZtwid phitwid omegaUtwid nk PX EetaZtwid EXeta nq vbias
+comp betahat_adj = betahat - (vbias/Tnow)
+/*
+disp "vbias"       @20 ###.###### vbias
+disp "vbias/Tnow"  @20 ###.###### vbias/Tnow
+disp "betahat"     @20 ###.###### betahat
+disp "betahat_adj" @20 ###.###### betahat_adj
+*/
+return
+end
+
+

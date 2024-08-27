@@ -1,0 +1,58 @@
+*nwbandwith.src
+/*
+See Newey and West (1994).
+Assumes OLS.  Let eta_hat(t) be the OLS residual. Cross products of rhs variables and instruments is constructed vi
+        x(t-1)*eta_hat(t)
+where x(t) is passed to this procedure. Note the lag: x(t-1)*eta_hat(t) NOT x(t)*eta_hat(t).
+In addtion to x, variables passed are
+eta_hat: series of least squares residuals
+q: known order of MA of the residual (and of cross-product of rhs variable and residual)
+Variables returned
+s0, s1: scalar real variables, as defined in Newey and West(1994).
+m: integer optimal bandwidth
+*/
+procedure nwbandwidth x eta_hat start_IP end_IP q s0 s1 m
+  type series x eta_hat
+  type int start_IP end_IP q *m
+  type real *s0 *s1
+
+  local real sigma0 gamma real_m Tnow sigmanow
+  local vector[real] sigma(q)
+  local series[real] temp_h temp_hj h_hat
+  local int sample_size_IP
+
+  compute Tnow = float(end_IP-start_IP+1)
+  * compute series h_hat
+  set h_hat start_IP end_IP = x{1}*eta_hat
+
+  * compute mean square of h_hat (h_hat has mean zero)
+  compute sigma0=%cov(h_hat,h_hat)
+
+  do j=1,q,1
+    clear temp_h temp_hj
+    set temp_h start_IP+j end_IP = h_hat
+    set temp_hj start_IP+j end_IP = h_hat{j}
+    compute sigmanow = %cov(temp_h,temp_hj) + %avg(temp_h)*%avg(temp_hj)
+  * use same (1/T) factor for all sigma
+    compute ratio = (Tnow-float(j))/Tnow
+    compute sigma(j) = ratio*sigmanow
+  end do j
+
+  * compute s0 and s1
+  compute s0=sigma0+2.0*%sum(sigma)
+  compute s1=0
+  do j=1,q,1
+    compute s1=s1+2.0*j*sigma(j)
+  end do j
+
+  * compute gamma
+  compute gamma=1.1447*((s1/s0)^2.0)^(1.0/3)
+
+  * compute m
+  compute sample_size_IP = end_IP-start_IP+1
+  compute real_m = gamma*(sample_size_IP^(1.0/3))
+  if real_m .gt. .5*Tnow
+     compute real_m = .5*Tnow
+  compute m = fix(real_m)
+  *display "m=" m
+end nwbandwidth

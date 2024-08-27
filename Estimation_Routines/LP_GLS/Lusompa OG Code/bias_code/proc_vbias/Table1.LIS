@@ -1,0 +1,102 @@
+source proc_vbias.src
+source proc_vb_ma0.src
+source proc_vb_d.src
+
+*the code is set up to be extended to produce bias for q>0, for the MA process eta(t)=v(t)+...+v(t+q), v(t)~iid.
+*But Table 1 only has results for q=0.
+
+*1. State the purpose of the run.
+
+display "This run is in response to vbias39.pdf, and produces Table1."
+This run is in response to vbias39.pdf, and produces Table1.
+display "It was exectuted at" %DATEANDTIME()
+It was exectuted at 11/24/2015 15:58
+display " "
+
+
+
+*2. Declare and set the parameters.
+
+declare int nz nq nk nN iflag g h i j
+
+compute nz=2
+compute nk=1
+compute nN=1
+compute iflag=0
+
+declare real phi1A phi2A phi1B phi2B phi1C phi2C sigma2_u
+declare rect[real] phi_matrix omegaU(nz,nz) phi(nz,nz) PX(nk,nz) Table1_vb_d Table1_ma0 Eetaztwid0(1,nz)
+declare vector[real] vbias
+declare vector[int] q_vec
+declare vector[rect] delta Eetaz
+
+
+compute phi1A = 1.5
+compute phi2A = -0.54
+compute phi1B = 0.55
+compute phi2B = 0.4
+compute phi1C = 0.9
+compute phi2C = 0
+compute phi_matrix=|| phi1A, phi2A | phi1B, phi2B | phi1C, phi2C ||
+
+compute q_vec=|| 0 ||
+
+compute sigma2_u=1
+compute omegaU=%zeros(nz,nz)
+compute omegaU(1,1)=sigma2_u
+
+compute PX=%zeros(nk,nz)
+compute PX(1,1)=1
+
+
+*3. Execute the program
+
+dim Table1_vb_d(%rows(phi_matrix),%rows(q_vec)) Table1_ma0(%rows(phi_matrix),%rows(q_vec))
+
+do g=1,%rows(phi_matrix),1
+(01.0054)
+(01.0054)     compute phi = %xrow(phi_matrix,g)~~|| 1.0,0.0 ||
+(01.0093)     compute nq=q_vec(1)
+(01.0114)
+(01.0114)     dim delta(nq+1) Eetaz(nq+1)
+(01.0158)     * compute delta
+(01.0158)     do h=1,nq+1,1
+(02.0209)       do i=1,nz,1
+(03.0255)         {
+(04.0255) *         defining Eetaz in this way sets delta=1
+(04.0255)           if i==1
+(05.0275)             compute Eetaz(h) = || sigma2_u ||
+(05.0304)           else
+(05.0306)             compute Eetaz(h) = Eetaz(h)~||0.0||
+(05.0344)         }
+(03.0344)         {
+(04.0344)           if i==1
+(05.0364)             compute delta(h) = || 1.0 ||
+(05.0392)           else
+(05.0394)             compute delta(h) = delta(h)~~||0.0||
+(05.0432)         }
+(03.0432)
+(03.0432)       end do i
+(02.0434)     end do h
+(01.0436)     comp EetaZtwid0 = Eetaz(1)
+(01.0458)
+(01.0458)     @proc_vb_d nz phi omegaU nk PX delta nq vbias
+(01.0551)     compute Table1_vb_d(g,1)=%scalar(vbias)
+(01.0577)     @proc_vb_ma0 nz phi omegaU nk PX EetaZtwid0 vbias
+(01.0660)     compute Table1_ma0(g,1)=%scalar(vbias)
+(01.0686)
+(01.0686) end do g
+
+display "Table 1B, col (2), using proc_vb_d" Table1_vb_d
+Table 1B, col (2), using proc_vb_d
+     -1.80416
+     -5.25000
+     -3.70000
+
+display "Table 1B, col (2), using proc_vb_ma0" Table1_ma0
+Table 1B, col (2), using proc_vb_ma0
+     -1.80416
+     -5.25000
+     -3.70000
+
+

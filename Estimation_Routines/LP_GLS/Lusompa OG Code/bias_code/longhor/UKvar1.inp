@@ -1,0 +1,2 @@
+ 1979     1      2011  3     2    2       2      UK_id_6m      UK_er_6m     UK_er_3m          UKvar1
+start_y start_q end_y end_q  q+1  nlag    nvar    i_series      er_series    er_one_period     output file name

@@ -1,0 +1,20 @@
+procedure proc_vb_maq nZtwid phitwid omegaUtwid nk PX EetaZtwid EXeta nq vbias
+  type int nZtwid nk nq
+  type rect phitwid omegaUtwid PX
+  type vect[real] EXeta
+  type vect[rect] EetaZtwid
+  type vect[real] *vbias
+
+  local int iflag nN
+  local vect[real] vbias1 vbias2
+  local vect[rect] delta
+  local rect gamma0 bigD
+
+  comp nN=1, iflag=1
+  dim vbias1(nk) vbias2(nk) gamma0(nztwid,nztwid) bigD(nk,nk)
+  dim delta(nq+1)
+
+  @proc_vbias iflag nztwid phitwid omegaUtwid nq nk nN PX Eetaztwid EXeta delta bigD gamma0 vbias1 vbias2 vbias
+
+  return
+end
