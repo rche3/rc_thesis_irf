@@ -1,0 +1,139 @@
+procedure proc_vbias iflag nztwid phitwid omegaUtwid nq nk nN PX Eetaztwid EXeta delta bigD gamma0 vbias1 vbias2 vbias
+  type int nztwid nq nk nN iflag
+  type rect[real] omegaUtwid *gamma0 phitwid PX *bigD
+  type vector[real] EXeta *vbias1 *vbias2 *vbias
+  type vector[rect] delta Eetaztwid
+
+  local int kd nz m i j h r s
+  compute kd = nk*(nk+1)/2
+  compute nz = nN*nztwid
+
+  local vec[real] delta0m(nztwid) vec_red_Q(nk^2)
+  local symmetric[real] Q(nk,nk)
+  local rect[real] omegaU phi Pxm(nk,nztwid) temp_mat temp_F F_rbtwid F_r F_rtwid vec_Frtwid F_ratwid F_rbtwid vec_Frbtwid Prj Prm red_Q(nk,nk) L_k(nk^2,kd) d_D F $
+  gamma0twid temp_B vec_delta
+
+  * compute phi, omegaU, gamma0twid and gamma0
+  compute phi = %kroneker(%identity(nN),phitwid)
+  compute omegaU = %kroneker(%identity(nN),omegaUtwid)
+
+     * Note you should calculate gamma0twid and gamma0 in the following steps instead of using %psdinit()
+     * Otherwise it reports error when phitwid (and phi) is close to identity matrix
+  local rect[real] vec_gamma0twid vec_gamma0
+  compute vec_gamma0twid = inv(%identity(nztwid^2)-%kroneker(phitwid,phitwid))*%vec(omegaUtwid)
+  compute gamma0twid = %vectorect(vec_gamma0twid,nztwid)
+  compute vec_gamma0 = inv(%identity(nz^2)-%kroneker(phi,phi))*%vec(omegaU)
+  compute gamma0 = %vectorect(vec_gamma0,nz)
+
+  * compute bigD
+  compute bigD = PX*gamma0*tr(PX)
+
+  * compute vbias1
+
+  if iflag==0
+  {
+    compute vec_delta = %zeros(nz,1)
+    do m=0,nq,1
+      compute vec_delta = vec_delta + %vec(delta(m+1))
+    end do m
+
+    compute vbias1 = %zeros(nk,1)-inv(bigD)*PX*inv(%identity(nz)-phi)*omegaU*vec_delta
+  }
+  else
+    compute vbias1 = %zeros(nk,1)-inv(bigD)*(Exeta+PX*inv(%identity(nz)-phi)*%vec(tr(Eetaztwid(nq+1))))
+
+  * compute symmetric matrix Q and redundant Q
+      do i=1,nk,1
+        do j=1,i,1
+          compute Q(i,j) = (j-1)*(2*nk-j+2)/2+i-j+1
+        end do j
+      end do i
+      compute red_Q = Q
+
+  * compute L_k
+  compute L_k = %zeros(nk^2,kd)
+  compute vec_red_Q = %vec(red_Q)
+  do i=1,nk^2,1
+    compute L_k(i,fix(vec_red_Q(i))) = 1
+  end i
+
+  * compute d_D
+  compute d_D = %zeros(nk^2,kd)-%kroneker(inv(bigD),inv(bigD))*L_k
+
+  * compute F
+  do r=1,nk,1
+    * compute F_r i.e., F_1, F_2, ... F_k
+    if iflag == 0
+    {
+      compute vec_Frtwid = %zeros(nztwid^2,1)
+      do m=1,nN,1
+        compute Prm = tr(%xsubmat(PX,r,r,(m-1)*nztwid+1,m*nztwid))
+
+        do s=0,nq,1
+          compute vec_Frtwid = vec_Frtwid + %vec(phitwid^(s+1)*gamma0twid*Prm*%xrow(tr(delta(s+1)),m)*omegaUtwid)
+        end do s
+      end do m
+      compute vec_Frtwid = inv(%identity(nztwid^2)-%kroneker(phitwid,phitwid))*vec_Frtwid
+      compute F_rtwid = %vectorect(vec_Frtwid,nztwid)
+      compute F_r = %kroneker(%identity(nN),F_rtwid)
+    }
+    else
+    {
+      * compute F_ratwid
+      compute F_ratwid = %zeros(nztwid,nztwid)
+      if nq>0
+      {
+        do j=1,nN,1
+          compute Prj = tr(%xsubmat(PX,r,r,(j-1)*nztwid+1,j*nztwid))
+
+          do s=0,nq-1,1
+            compute F_ratwid = F_ratwid + phitwid^(s+1)*gamma0twid*Prj*%xrow(Eetaztwid(s+1),j)
+          end do s
+        end do j
+      }
+
+      * compute F_rbtwid
+      compute vec_Frbtwid = %zeros(nztwid^2,1)
+      do j=1,nN,1
+        compute Prj = tr(%xsubmat(PX,r,r,(j-1)*nztwid+1,j*nztwid))
+        compute vec_Frbtwid = vec_Frbtwid + %vec(phitwid^(nq+1)*gamma0twid*Prj*%xrow(Eetaztwid(nq+1),j))
+      end do j
+      compute vec_Frbtwid = inv(%identity(nztwid^2)-%kroneker(phitwid,phitwid))*vec_Frbtwid
+      compute F_rbtwid = %vectorect(vec_Frbtwid,nztwid)
+
+      * compute F_r i.e., F_1, F_2, ... F_k
+      compute F_r = %kroneker(%identity(nN),F_ratwid)+%kroneker(%identity(nN),F_rbtwid)
+    }
+
+    * compute temp_F, i.e., the r-th column of F
+    compute temp_F = %zeros(kd,1)
+    do i=1,nk,1
+      do h=i,nk,1
+        compute temp_F(fix(Q(i,h)),1) = %scalar(%xrow(PX,i)*(F_r+tr(F_r))*tr(%xrow(PX,h)))
+      end do h
+    end do i
+
+    if r==1
+      compute F = temp_F
+    else
+      compute F = F~temp_F
+  end do r
+
+  * compute vbias2 and vbias
+      do i=1,nk,1
+        compute temp_B = %xsubmat(d_D,(i-1)*nk+1,i*nk,1,kd)
+
+    if i==1
+      compute vbias2 = || %trace(temp_B*F) ||
+    else
+      compute vbias2 = vbias2~~|| %trace(temp_B*F) ||
+      end do i
+  compute vbias = vbias1 + vbias2
+
+/*
+  display "vbias1" vbias1
+  display "vbias2" vbias2
+  display "vbias" vbias
+*/
+end proc_vbias
+

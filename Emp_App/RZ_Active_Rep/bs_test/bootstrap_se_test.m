@@ -63,28 +63,72 @@ end
 % x = [ones(T_ss-4, 1) regressor(5:end) lag_regressor(5:end, :)];
 
 % Generate the standard LP IRFs
-[liny, confidencey]=linlp_rc(data,x,hor,rpos,transformation,clevel,opt,0,nlag);
-se = abs(liny(1, :) - confidencey(1, :, 1))/clevel;
-se = se';
+B = 400;
+
+[liny, confidencey]=linlp_rc(data,x,hor,rpos,transformation,clevel,opt,0,nlag, B);
+
+se = zeros(2,hor);
+for i=1:2
+    se(i, :) = abs(liny(i, :) - confidencey(1, :, i))/clevel;
+end
 
 %% Compute Bootstrap SEs
 clear bs_confidencey
-[liny, bs_confidencey, bs_beta_means] = linlp_rc(data,x,hor,rpos,transformation, clevel, opt, 1, nlag, 0);
-bs_se = abs(liny(1, :) - bs_confidencey(1, :, 1))/clevel;
-bs_se = bs_se';
+[liny, bs_confidencey, bs_beta_means, bs_beta_dist] = linlp_rc(data,x,hor,rpos,transformation, clevel, opt, 1, nlag, B);
+bs_se = zeros(2,hor);
+for i=1:2
+    bs_se(i, :) = abs(liny(1,:) - bs_confidencey(1,:,1))/clevel;
+end
 
-% %% Override Bootstrap SEs with Lag-Augmented CIs
-% clear bs_confindencey
-% [liny, bs_confidencey, bs_beta_means] = linlp_rc(data(2:end, :),x_la,hor,rpos,transformation, clevel, opt, 1, nlag+1);
-% bs_se = abs(liny(1, :) - bs_confidencey(1, :, 1))/clevel';
-% bs_se = bs_se';
-% 
-% %% Override Bootstrap SEs with sample mean of NWest Corrected
-% clear bs_confindencey
-% [liny, bs_confidencey, bs_beta_means] = linlp_rc(data,x,hor,rpos,transformation, clevel, opt, 1, nlag, 1);
-% bs_se = abs(liny(1, :) - bs_confidencey(1, :, 1))/clevel';
-% bs_se =on bs_se';
+%% Compare P Values
+% analytical p values
+pvalue_nw = zeros(hor, 2);
+h0 = 0; % null hypothesis that IRF is zero
+for j=1:2
+    for i=1:hor
+        pvalue_nw(i,j) = 2*(1-normcdf(abs(liny(j, i)), 0, se(j, i)));
+    end
+end
 
+% bootstrap p values
+pvalue_bs = zeros(hor, 2);
+for j=1:2
+    for i=1:hor
+        bs_reps = bs_beta_dist(:,j,i);
+        irfest = liny(j,i);
+        demeaned_bs = bs_reps - mean(bs_reps);
+        uppertail = demeaned_bs(demeaned_bs>irfest);
+        lowertail = demeaned_bs(demeaned_bs<irfest);
+        pvalue_bs(i,j) = 2 * min(length(uppertail), length(lowertail))/length(demeaned_bs);
+%         figure;
+%         hold on
+%         hist(demeaned_data, 100);
+%         vline(irfest)
+    end
+end
+
+%% Compare Empirical and NWest Distributions
+
+figure;
+hor_temp = 2;
+response_temp = 1;
+% create and plot empirical (smoothed) PDF
+a = bs_beta_dist(:,response_temp,hor_temp);
+[f, xi, bw] = ksdensity(a, 'Function', 'pdf');
+plot(xi, f, 'LineWidth', 0.7, 'LineStyle','--')
+hold on
+
+% create nwest empirical smoothed PDF
+pointest = liny(response_temp,hor_temp);
+se_nw = se(response_temp,hor_temp);
+nwest_data = pointest + se_nw * randn(10000, 1); % creates dist with N(betahat, se^2)
+[f, xi, bw] = ksdensity(nwest_data, 'Function', 'pdf');
+plot(xi, f, 'LineWidth', 0.7, 'LineStyle','-')
+
+% ecdf(a)
+legend('empirical (smoothed) dist', 'nwest dist')
+
+%%
 % Plot Bootstrap SEs and Analytical SEs
 close all
 zz=zeros(1,hor);

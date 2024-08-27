@@ -1,0 +1,24 @@
+procedure proc_vb_ma0 nZtwid phitwid omegaUtwid nk PX EetaZtwid0 vbias
+  type int nZtwid nk
+  type rect phitwid omegaUtwid PX
+  type vect[real] EetaZtwid0
+  type vect[real] *vbias
+
+  local int iflag nN nq
+  local vect[real] vbias1 vbias2 EXeta
+  local vect[rect] delta EetaZtwid
+  local rect gamma0 bigD
+
+  comp nq=0
+  comp nN=1, iflag=1
+  dim vbias1(nk) vbias2(nk) gamma0(nztwid,nztwid) bigD(nk,nk)
+  dim EXeta(nk) EetaZtwid(1)
+  dim delta(nq+1)
+  comp EXeta = %const(0.)
+*don't know why this requires transpose, but it does
+  comp EetaZtwid(1) = tr(EetaZtwid0)
+
+  @proc_vbias iflag nztwid phitwid omegaUtwid nq nk nN PX Eetaztwid EXeta delta bigD gamma0 vbias1 vbias2 vbias
+
+  return
+end
