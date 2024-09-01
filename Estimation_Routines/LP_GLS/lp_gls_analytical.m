@@ -9,7 +9,7 @@ function [Beff, s_errors] = lp_gls_analytical(y,arp,maxh,badj)
     %badj equals 1 for bias adjustment and 0 otherwise
 
 %Output:
-    %Beff is the qxqxmaxh matrix of the wold impulse responses bootstrap replications. For
+    %Beff is the qxqxmaxh matrix of the wold impulse responses. For
         %example Beff(:,:,h)' gives the horizon h estimate of the wold impulse
     %s_errors qxqxmaxh matrix of standard errors corresponding to the Beff matrix
 
