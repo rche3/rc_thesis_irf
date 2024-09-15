@@ -1,5 +1,6 @@
 function [irf] = IRF_SVAR(By,ShockVector,nhorizons)
 % Auxiliary function for estimating IRFs using VAR coefficients
+% returns a K x h matrix of IRFs (K is number of dimensions
 
 nv = size(By,1);
 nlags = size(By,3);

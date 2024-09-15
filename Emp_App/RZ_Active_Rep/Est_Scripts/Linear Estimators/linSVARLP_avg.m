@@ -1,12 +1,12 @@
-function [liny, confidencey] = VARLP_Avg(data,x,hor,rpos,transformation, clevel, opt, nlag, bias_corrected, bootstrap)
+function [liny, confidencey] = linSVARLP_avg(data,x,hor,rpos,transformation, clevel, opt, nlag, bias_corrected, bootstrap)
 %VARLP_AVG Summary of this function goes here
 %   Detailed explanation goes here
 
-    [irf_var, ~] = SVAR(data,x,hor,rpos,transformation, clevel, opt, nlag, bias_corrected);
+    [irf_var, ~] = linSVAR(data,x,hor,rpos,transformation, clevel, opt, nlag, bias_corrected);
     [irf_lp, ~] = linlp(data,x,hor,rpos,transformation, clevel, opt, nlag, bootstrap);
 
-    disp(irf_var)
-    disp(irf_lp)
+%     disp(irf_var)
+%     disp(irf_lp)
     
     % S.E. TBD
     var_weight = 0.5;

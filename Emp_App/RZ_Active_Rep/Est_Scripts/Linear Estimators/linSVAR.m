@@ -1,0 +1,38 @@
+function [liny,confidencey] = linSVAR(data,x,hor,rpos,transformation, clevel, opt, nlags, bias_corrected)
+    % SVAR Summary of this function goes here
+    %   Detailed explanation goes here
+
+    % VAR preparations
+    res_autocorr_nlags = 2;
+    normalizeV = 1; % we are normalising with one unit of shock
+    recursiveShock = 1;
+    Y = [x(:, rpos), data]; % construct the three-variable Y vector with gov, gdp, and shock
+    
+    % estimate VAR and IRFs
+    if bias_corrected == 0
+        [Bc,By,Sigma,Sxx,Res,Beta] = VAR(Y,nlags); % no bias correction
+    else
+        [Bc,By,Sigma] = VAR_CorrectBias(Y,nlags); % with bias correction
+    end
+
+    G = chol(Sigma, 'lower'); % Warning: correspond to matrix C in our paper
+    ShockVector = G(:,recursiveShock);
+    IRF = IRF_SVAR(By,ShockVector,hor); % IRF to one unit of shock
+
+    % begin loop
+    [dr,dsize]=size(data);
+    for j=1:dsize
+        responseV = j+1;
+        IRF_temp = IRF(responseV,:) / IRF(normalizeV,1); % normalize by response of normalization variable
+        se_temp = abs(0.01 * IRF_temp(1));
+
+        % store variables
+        liny(j,:)=IRF_temp; % only take the beta results
+
+        % get SEs - PLACEHOLDER, NEED FIX
+        sey(j,:)=se_temp;
+        confidencey(1,:,j)=liny(j,:)-(sey(j,:)*clevel);
+        confidencey(2,:,j)=liny(j,:)+(sey(j,:)*clevel);
+    end
+end
+

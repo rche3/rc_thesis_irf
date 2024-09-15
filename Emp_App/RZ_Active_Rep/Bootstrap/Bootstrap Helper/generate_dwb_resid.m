@@ -27,12 +27,10 @@ for i=1:T
 end
 L = chol(K, 'lower');
 
-
 % generate wild epsilon vector
 values = wild_settings(1, :);
 probabilities = wild_settings(2,:);
 e_vec = disc_rv(values, probabilities, T);
-% e_vec = randn(T, 1);
 
 % finish
 innov_vec = U * L * e_vec;

@@ -1,6 +1,6 @@
-function [bs_beta_se, bs_beta_mean, irf_] = compute_dwb_se(resid, y, x, beta, h, nlag, y_pos_control, B)
+function [bs_beta_se, bs_beta_mean, irf_beta_bs] = compute_dwb_se(resid, y, x, beta, h, nlag, y_pos_control, B)
 % COMPUTE_BOOTSTRAP_SE Summary of this function goes here
-% Returns the bootstrapped standard errors for each beta in the LP
+% Returns the bootstrapped standard errors for the beta matrix in the LP
 % regression given horizon, observations, Newey-West residuals
 
 % check the size is the same for resid, y, x
@@ -21,15 +21,14 @@ T = T_resid - h - nlag; % our effective "T" which will be the length of the boot
 y_bs = zeros(T, 1);
 
 % DWB bootstrap settings
-e1 = (-sqrt(5)-1)/2; e2 = (sqrt(5)+1)/2;
-p1 = (sqrt(5)+1)/(2*sqrt(5)); p2 = 1-p1;
-% e1 = 1; e2 = -1;
-% p1 = 0.5; p2 = 0.5;
+% e1 = (-sqrt(5)+1)/2; e2 = (sqrt(5)+1)/2;
+% p1 = (sqrt(5)+1)/(2*sqrt(5)); p2 = 1-p1;
+e1 = 1; e2 = -1;
+p1 = 0.5; p2 = 1-p1;
 values = [e1, e2];
 probabilities = [p1, p2];
 num_samples = T;
 wild_settings = [values; probabilities];
-
 
 % create residual bootstrap samples
 
@@ -72,6 +71,7 @@ for j = 1:bs_samples
 end
 
 % compute variance of the bootstrapped betas
+irf_beta_bs = beta_bs;
 cov_beta = cov(beta_bs');
 bs_beta_var = diag(cov_beta);
 bs_beta_se = bs_beta_var.^(1/2);

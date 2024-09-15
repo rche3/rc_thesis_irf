@@ -53,15 +53,6 @@ elseif trend==0
     rpos=2;
 end
 
-% temporarily redefine data
-% T_ss = 2500;
-% data = randn(T_ss, 2);
-% x = [ones(T_ss, 1) randn(T_ss, 13)];
-
-% lag_regressor = lagmatrix(regressor, [1:4]); 
-% data = data(5:end, :);
-% x = [ones(T_ss-4, 1) regressor(5:end) lag_regressor(5:end, :)];
-
 % Generate the standard LP IRFs
 B = 400;
 
@@ -72,44 +63,69 @@ for i=1:2
     se(i, :) = abs(liny(i, :) - confidencey(1, :, i))/clevel;
 end
 
-%% Compute Bootstrap SEs
+%%% Compute Bootstrap SEs
 clear bs_confidencey
-[liny, bs_confidencey, bs_beta_means, bs_beta_dist] = linlp_rc(data,x,hor,rpos,transformation, clevel, opt, 1, nlag, B);
+emp = 0; % 1 = use empirical dist of bootstrap betas, 0 = sample variance
+[liny, bs_confidencey, bs_beta_means, bs_beta_dist] = linlp_rc(data,x,hor,rpos,transformation, clevel, opt, 1, nlag, B, emp);
 bs_se = zeros(2,hor);
 for i=1:2
     bs_se(i, :) = abs(liny(1,:) - bs_confidencey(1,:,1))/clevel;
 end
 
 %% Compare P Values
-% analytical p values
-pvalue_nw = zeros(hor, 2);
+% analytical t-statistic (tau) per horizon and per response variable
 h0 = 0; % null hypothesis that IRF is zero
+tau = (liny-h0)./se; %
+
+% bootstrap t-statistic (tau) distribution
+tau_bs = zeros(B,2,hor);
 for j=1:2
     for i=1:hor
-        pvalue_nw(i,j) = 2*(1-normcdf(abs(liny(j, i)), 0, se(j, i)));
+        tau_bs(:,j,i) = (bs_beta_dist(:,j,i)-(liny(j,i)-h0))./bs_se(j,i);
+        % bs_beta_dist is (B x nvar x hor)
     end
 end
 
-% bootstrap p values
-pvalue_bs = zeros(hor, 2);
+% compute regular p values
+pval = zeros(2,hor);
 for j=1:2
     for i=1:hor
-        bs_reps = bs_beta_dist(:,j,i);
-        irfest = liny(j,i);
-        demeaned_bs = bs_reps - mean(bs_reps);
-        uppertail = demeaned_bs(demeaned_bs>irfest);
-        lowertail = demeaned_bs(demeaned_bs<irfest);
-        pvalue_bs(i,j) = 2 * min(length(uppertail), length(lowertail))/length(demeaned_bs);
-%         figure;
-%         hold on
-%         hist(demeaned_data, 100);
-%         vline(irfest)
+        pval(j,i) = 2*(1-normcdf(tau(j,i))); % two sided p value
     end
 end
+
+% compute bootstrap p values - proportion of bs tau distriution > % abs(tau)
+pval_bs = zeros(2,hor);
+for j=1:2
+    for i=1:hor
+        abs_tau = abs(tau(j,i)); % absolute value of analytical test statistic
+        abs_tau_bs = abs(tau_bs(:,j,i)); % absolute value of each bootstrap test statistic
+        pval_bs(j,i) = (1/B) * sum(abs_tau_bs > abs_tau);
+    end
+end
+
+% for first horizon, first response variable, plot the tau vs tau dist
+figure;
+varno=1;
+h=1;
+histogram(tau_bs(:,varno,h), 20);
+vline(tau(varno,h));
+legend('Distribution of Bootstrap test statistics', ...
+    'Test statistic using OLS estimate and NWest SE')
+
+
+[pval(varno,:)', pval_bs(varno,:)']
+
+% plot 5% rejections
+sig = 0.05;
+h0_rej = [pval(varno,:) < sig];
+h0_rej_bs = [pval_bs(varno,:) < sig];
+
+[h0_rej', h0_rej_bs']
 
 %% Compare Empirical and NWest Distributions
 
-figure;
+fig = figure;
 hor_temp = 2;
 response_temp = 1;
 % create and plot empirical (smoothed) PDF
@@ -127,6 +143,8 @@ plot(xi, f, 'LineWidth', 0.7, 'LineStyle','-')
 
 % ecdf(a)
 legend('empirical (smoothed) dist', 'nwest dist')
+
+% saveas(fig, 'Fig/empirical_nwest_pdfs.png');
 
 %%
 % Plot Bootstrap SEs and Analytical SEs
@@ -195,9 +213,13 @@ legend('LP IRF', 'BS IRF')
 
 
 %% NON-LINEAR Model
+%%%%%%%%%%%%%%%%%%
+% NON LINEAR MODEL
+%%%%%%%%%%%%%%%%%%
 clear x;
 x=xorig;
 fu=fu(nlag+1:end); % fu = 1 if the previous period exceeded threshold
+emp = 0;
 
 if trend==4 % allow quartic trend
     x=[t', tsq', tcu', tqu', constant, (1-fu).*constant, fu.*shock, (1-fu).*shock, repmat(fu,1,size(x,2)).*x, repmat((1-fu),1,size(x,2)).*x];
@@ -210,11 +232,12 @@ elseif trend==0 %no trend
     rpost=3; % position of shock
 end
 
-[stateay, stateby, confidenceya, confidenceyb]=statelp_rz(data,x,hor,rpost,transformation, clevel, opt, 0); 
+[stateay, stateby, confidenceya, confidenceyb]=statelp_rc(data,x,hor,rpost,transformation, clevel, opt, 0, emp, nlag, B); 
 
 %% NON-LINEAR Model - Bootstrapped CIs
-
-[stateay, stateby, bs_confidenceya, bs_confidenceyb] = statelp_rz(data,x,hor,rpost,transformation, clevel, opt, 0); 
+emp = 0; % do we use empirical distribution for CIs or compute variance + assume normal bootstrap dist
+B = 199;
+[stateay, stateby, bs_confidenceya, bs_confidenceyb, ~, ~] = statelp_rc(data,x,hor,rpost,transformation, clevel, opt, 1, emp, nlag, B); 
 %% Plotting Non-Linear
 close all
 zz=zeros(1,hor);
@@ -224,57 +247,69 @@ tiledlayout(2,2);
 nexttile;
 hold on
 % plot high unemployment (state A) point estimates and CI
-plot(1:1:hor, stateay(i,:), 'Color', [0.08 0.64 0.4],'LineWidth', 1.5)
-grpyat=[(1:1:hor)', confidenceya(1,:,i)'; (hor:-1:1)' confidenceya(2,hor:-1:1,i)'];
-patch(grpyat(:,1), grpyat(:,2), [0.5 0.5 0.5],'edgecolor', [0.5 0.5 0.5], 'FaceAlpha', 0.5);
-% plot CIs - bootstrapped
-% grpyat=[(1:1:hor)', bs_confidencey(1,:,i)'; (hor:-1:1)' bs_confidencey(2,hor:-1:1,i)'];
-% patch(grpyat(:,1), grpyat(:,2), [0.5 0.9 0.5],'edgecolor', [0.5 0.9 0.5], 'FaceAlpha', 0.3);
+plot(1:1:hor, stateay(i,:), 'Color', [0,0,0],'LineWidth', 1.5)
+% plot CIs (analytical and bootstrapped respectively)
+plot(1:1:hor, confidenceya(1,:,i), 'Color', 'blue', 'Linestyle', '--')
+plot(1:1:hor, confidenceya(2,:,i), 'Color', 'blue', 'Linestyle', '--')
+plot(1:1:hor, bs_confidenceya(1,:,i), 'Color', 'green', 'Linestyle', '--')
+plot(1:1:hor, bs_confidenceya(2,:,i), 'Color', 'green', 'Linestyle', '--')
+% plot horizontal line
 plot(1:1:hor, zz, 'k-')
 axis tight
 ylabel('Government spending')
 xlabel('quarter')
 title('High unemployment IRFs')
+legend('Point estimate', 'NWest CI Lower', 'NWest CI Upper', 'Bootstrap CI Lower', 'Bootstrap CI Upper')
 
 nexttile;
 hold on
-% plot high unemployment (state A) point estimates and CI
-plot(1:1:hor, stateby(i,:), 'Color', [0.08 0.64 0.4],'LineWidth', 1.5)
-grpyat=[(1:1:hor)', confidenceyb(1,:,i)'; (hor:-1:1)' confidenceyb(2,hor:-1:1,i)'];
-patch(grpyat(:,1), grpyat(:,2), [0.5 0.5 0.5],'edgecolor', [0.5 0.5 0.5], 'FaceAlpha', 0.5);
-% plot CIs - bootstrapped
+% plot high unemployment (state B) point estimates and CI
+plot(1:1:hor, stateby(i,:), 'Color', [0,0,0],'LineWidth', 1.5)
+% plot CIs (analytical and bootstrapped respectively)
+plot(1:1:hor, confidenceyb(1,:,i), 'Color', 'blue', 'Linestyle', '--')
+plot(1:1:hor, confidenceyb(2,:,i), 'Color', 'blue', 'Linestyle', '--')
+plot(1:1:hor, bs_confidenceyb(1,:,i), 'Color', 'green', 'Linestyle', '--')
+plot(1:1:hor, bs_confidenceyb(2,:,i), 'Color', 'green', 'Linestyle', '--')
+% plot horizontal line
 plot(1:1:hor, zz, 'k-')
 axis tight
-ylabel('GDP')
 xlabel('quarter')
 title('Low unemployment IRFs')
+legend('Point estimate', 'NWest CI Lower', 'NWest CI Upper', 'Bootstrap CI Lower', 'Bootstrap CI Upper')
+
 
 i=2;
 nexttile;
 hold on
 % plot high unemployment (state A) point estimates and CI
-plot(1:1:hor, stateay(i,:), 'Color', [0.08 0.64 0.4],'LineWidth', 1.5)
-grpyat=[(1:1:hor)', confidenceya(1,:,i)'; (hor:-1:1)' confidenceya(2,hor:-1:1,i)'];
-patch(grpyat(:,1), grpyat(:,2), [0.5 0.5 0.5],'edgecolor', [0.5 0.5 0.5], 'FaceAlpha', 0.5);
-% plot CIs - bootstrapped
-% grpyat=[(1:1:hor)', bs_confidencey(1,:,i)'; (hor:-1:1)' bs_confidencey(2,hor:-1:1,i)'];
-% patch(grpyat(:,1), grpyat(:,2), [0.5 0.9 0.5],'edgecolor', [0.5 0.9 0.5], 'FaceAlpha', 0.3);
-plot(1:1:hor, zz, 'k-')
-axis tight
-ylabel('Government spending')
-xlabel('quarter')
-title('High unemployment IRFs')
-
-%%% 
-nexttile;
-hold on
-% plot high unemployment (state A) point estimates and CI
-plot(1:1:hor, stateby(i,:), 'Color', [0.08 0.64 0.4],'LineWidth', 1.5)
-grpyat=[(1:1:hor)', confidenceyb(1,:,i)'; (hor:-1:1)' confidenceyb(2,hor:-1:1,i)'];
-patch(grpyat(:,1), grpyat(:,2), [0.5 0.5 0.5],'edgecolor', [0.5 0.5 0.5], 'FaceAlpha', 0.5);
-% plot CIs - bootstrapped
+plot(1:1:hor, stateay(i,:), 'Color', [0,0,0],'LineWidth', 1.5)
+% plot CIs (analytical and bootstrapped respectively)
+plot(1:1:hor, confidenceya(1,:,i), 'Color', 'blue', 'Linestyle', '--')
+plot(1:1:hor, confidenceya(2,:,i), 'Color', 'blue', 'Linestyle', '--')
+plot(1:1:hor, bs_confidenceya(1,:,i), 'Color', 'green', 'Linestyle', '--')
+plot(1:1:hor, bs_confidenceya(2,:,i), 'Color', 'green', 'Linestyle', '--')
+% plot horizontal line
 plot(1:1:hor, zz, 'k-')
 axis tight
 ylabel('GDP')
 xlabel('quarter')
+title('High unemployment IRFs')
+legend('Point estimate', 'NWest CI Lower', 'NWest CI Upper', 'Bootstrap CI Lower', 'Bootstrap CI Upper')
+
+
+%%% 
+nexttile;
+hold on
+% plot high unemployment (state B) point estimates and CI
+plot(1:1:hor, stateby(i,:), 'Color', [0,0,0],'LineWidth', 1.5)
+% plot CIs (analytical and bootstrapped respectively)
+plot(1:1:hor, confidenceyb(1,:,i), 'Color', 'blue', 'Linestyle', '--')
+plot(1:1:hor, confidenceyb(2,:,i), 'Color', 'blue', 'Linestyle', '--')
+plot(1:1:hor, bs_confidenceyb(1,:,i), 'Color', 'green', 'Linestyle', '--')
+plot(1:1:hor, bs_confidenceyb(2,:,i), 'Color', 'green', 'Linestyle', '--')
+% plot horizontal line
+plot(1:1:hor, zz, 'k-')
+axis tight
+xlabel('quarter')
 title('Low unemployment IRFs')
+legend('Point estimate', 'NWest CI Lower', 'NWest CI Upper', 'Bootstrap CI Lower', 'Bootstrap CI Upper')

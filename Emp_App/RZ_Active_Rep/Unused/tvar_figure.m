@@ -2,7 +2,6 @@ clear all
 close all
 clc
 
-
 shockchoice=1; % 1 means news shock; 2 means BP shock
 
 if shockchoice==1
@@ -53,6 +52,8 @@ hold on
 plot(1:1:hor, recirf(:,4), 'r-o', 1:1:hor, recirf(:,5), 'r--', 1:1:hor,  recirf(:,6), 'r--', 'LineWidth', 1.5);
 title('Recession-dependent: GDP')
 axis tight
+
+
 subplot(2,2,3)
 grpyat=[(1:1:hor)', nonzlbirf(:,2); (hor:-1:1)' nonzlbirf(hor:-1:1,3)];
 patch(grpyat(:,1), grpyat(:,2), [0.7 0.7 0.7],'edgecolor', [0.7 0.7 0.7]);
