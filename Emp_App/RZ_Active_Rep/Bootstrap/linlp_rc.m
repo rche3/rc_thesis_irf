@@ -1,4 +1,4 @@
-function [liny,confidencey, bs_beta_means, bs_beta_dist]=linlp_rc(data,x,hor,rpos,transformation, clevel, opt, bootstrap, nlag, nstraps) 
+function [liny,confidencey, bs_beta_means, bs_beta_dist]=linlp_rc(data,x,hor,rpos,transformation, clevel, opt, bootstrap, nlag, nstraps, emp) 
 
 [dr,dsize]=size(data);
 if bootstrap == 1
@@ -31,20 +31,22 @@ for j=1:dsize
 
         % compute SEs
         if bootstrap == 1
-%             [bs_beta_se, bs_beta_mean] = compute_bootstrap_se1(results.resid, yy, x(1: end-i +1, :), results.beta);
             [bs_beta_se, bs_beta_mean, bs_beta] = compute_dwb_se(results.resid, yy, x(1: end-i +1, :), results.beta, i, nlag, y_pos_control, nstraps);
-%             [bs_beta_se, bs_beta_mean] = copute_bootstrap_se(results.resid, yy, x(1: end-i +1, :), results.beta, i, nlag, y_pos_control, wild);
-%             [bs_beta_se, bs_beta_mean] = compute_bootstrap_se_plain(results.resid, yy, x(1: end-i +1, :), results.beta);
-%             [bs_beta_se, bs_beta_mean] = compute_block_bootstrap_se(results.resid, yy, x(1: end-i +1, :), results.beta, i, nlag, y_pos_control);
-%             [bs_beta_se, bs_beta_mean] = compute_block_bootstrap_se1(results.resid, yy, x(1: end-i +1, :), results.beta);
             se(:, i) = bs_beta_se;
             bs_beta_means(j, i) = bs_beta_mean(rpos);
             irf_bs_dist = bs_beta(rpos, :); % returns 1 x B bootstrapped estimates
             bs_beta_dist(:,j,i) = irf_bs_dist';
-            upperq = quantile(irf_bs_dist, 0.975);
-            lowerq = quantile(irf_bs_dist, 0.025);
-            bs_ci(1,i,j) = 2*irf_est - upperq;
-            bs_ci(2,i,j) = 2*irf_est + lowerq;
+            if emp == 1
+                upperq = quantile(irf_bs_dist, 0.975);
+                lowerq = quantile(irf_bs_dist, 0.025);
+                bs_ci(1,i,j) = 2*irf_est - upperq;
+                bs_ci(2,i,j) = 2*irf_est + lowerq;
+            else
+                bs_se = var(irf_bs_dist)^(1/2);
+                bs_ci(1,i,j) = irf_est - clevel * bs_se;
+                bs_ci(2,i,j) = irf_est + clevel * bs_se;
+            end
+            
         else
             % standard analytic SE
             if opt==0

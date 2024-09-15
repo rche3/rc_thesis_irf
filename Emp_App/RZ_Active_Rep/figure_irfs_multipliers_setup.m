@@ -2,6 +2,7 @@
 %DATA
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% vdata = readtable('rzdatnew.csv') % US data
 vdata = xlsread('RZDAT.xlsx',2); % US data
 time=vdata(:,1);
 

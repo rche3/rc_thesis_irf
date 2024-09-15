@@ -73,11 +73,13 @@ irfTypes = {'LP', 'LP_BC', 'LP_Penalised', 'LP_Lagaug', 'SVAR', 'VARLP_Avg'};
 [lin_results.IRF.LP_Penalised, lin_results.CI.LP_Penalised]=linlp_penalised(data,x,hor,rpos,transformation, clevel, opt, nlag); 
 % lag-augmented LP
 [lin_results.IRF.LP_Lagaug, lin_results.CI.LP_Lagaug]=linlp(data(2:end, :),x_la,hor,rpos,transformation, clevel, opt, nlag, 1); % lagaug uses same script, different regressor
+
 %% VARS
 % VAR
-[lin_results.IRF.SVAR, lin_results.CI.SVAR] = SVAR(data, x, hor, rpos, transformation, clevel, opt, nlag, 0);
+[lin_results.IRF.SVAR, lin_results.CI.SVAR] = linSVAR(data, x, hor, rpos, transformation, clevel, opt, nlag, 0);
 % VAR / LP Averaged (TBD)
 [lin_results.IRF.VARLP_Avg, lin_results.CI.VARLP_Avg] = VARLP_Avg(data, x, hor, rpos, transformation, clevel, opt, nlag, 0, 0);
+
 %%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %NON-LINEAR
@@ -98,7 +100,8 @@ elseif trend==0 %no trend
 end
 
 [stateay, stateby, confidenceya, confidenceyb]=statelp_rz(data,x,hor,rpost,transformation, clevel, opt); 
-%% Temp figures, just IRF and multipliers
+
+%% Poster figures - multipliers
 run('setup.m')
 close all
 
@@ -139,7 +142,7 @@ lgd = legend('Location', 'northeast'); lgd.Interpreter = 'none';
 sgtitle('Impulse responses to GDP and Government spending for a military news shock')
 
 saveas(irf_fig, 'irf_estimates.png')
-%% Poster figures - multipliers
+
 for j = 1:length(irfTypes)
     irfType = irfTypes{j};
     lin_results.cum_mult.(irfType) = cumsum(lin_results.IRF.(irfType)(2, :)) ./ cumsum(lin_results.IRF.(irfType)(1, :));
@@ -304,6 +307,3 @@ plot(1:1:hor, cum_mult_stateb, 'r-o', 'LineWidth', 1.5);
 title('State dependent: cumulative spending multiplier')
 xlabel('quarter')
 axis tight
-
-
-

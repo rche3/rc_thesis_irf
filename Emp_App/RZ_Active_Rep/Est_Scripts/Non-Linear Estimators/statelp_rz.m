@@ -1,4 +1,4 @@
-function [stateay, stateby, confidenceya, confidenceyb]=statelp_rz(data,x,hor,rpost,transformation, clevel, opt, bootstrap) 
+function [stateay, stateby, confidenceya, confidenceyb]=statelp_rz(data,x,hor,rpost,transformation, clevel, opt) 
 
 [dr,dsize]=size(data);
 for j=1:dsize
@@ -13,15 +13,11 @@ for j=1:dsize
         results=nwest(yy, x(1:end-i+1,:),i);
         regy(:,i)=results.beta;
         
-        if bootstrap == 1
-            
+        if opt==0
+            se(:,i)=results.se';
         else
-            if opt==0
-                se(:,i)=results.se';
-            else
-                [EstCov, hacse, coeff]=hac_alt(x(1:end-i+1,:), yy, 'intercept', false, 'smallT', false, 'display', 'off'); 
-                se(:,i)=hacse';
-            end
+            [EstCov, hacse, coeff]=hac_alt(x(1:end-i+1,:), yy, 'intercept', false, 'smallT', false, 'display', 'off'); 
+            se(:,i)=hacse';
         end
     end
     stateay(j,:)=regy(rpost,:);
