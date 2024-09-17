@@ -1,4 +1,4 @@
-function [irfa, irfb, cia, cib, pvala, pvalb, beta] = stateSVAR(y, I, p, hor, rind, sind)
+function [irfa, irfb, cia, cib, bs_beta_dist, pval, beta] = stateSVAR(y, I, p, hor, rind, sind, B)
 % STATESVAR computes the irfs and CIs for the state dependent vector autoregression
 % By default uses the Cholesky decomposition for SVAR identification
 % Inputs:
@@ -34,15 +34,15 @@ function [irfa, irfb, cia, cib, pvala, pvalb, beta] = stateSVAR(y, I, p, hor, ri
     
     % create placeholder matrices
     states = {'a','b'}; num_states = length(states);  % assuming 'state' is already defined
-    beta = zeros(num_states, K*p+1, K);
+    beta = zeros(K*p+1, K, num_states);
     resid = cell(1,num_states);
     sigma_u = cell(1,num_states);
 
     % output placeholders
-    nresp = length(rind);
-    irf_comb = zeros(length(states),nresp,hor);
-    pvala = zeros(nresp, hor);
-    pvalb = zeros(nresp, hor);
+    r = length(rind);
+    irf_comb = zeros(length(states),r,hor);
+    pval = nan(2,r,hor);
+    bs_beta_dist = nan(2,B,r,hor);
 
     % COMPUTE IRFS
     for i=1:2
@@ -85,8 +85,8 @@ function [irfa, irfb, cia, cib, pvala, pvalb, beta] = stateSVAR(y, I, p, hor, ri
         end
 
         % Step 4: Pull specific IRFs to response vars & normalise
-        theta_i = zeros(nresp,hor); 
-        for j=1:nresp
+        theta_i = zeros(r,hor); 
+        for j=1:r
             resp_ind = rind(j);
             for h=1:hor
                 theta_i(j,h) = theta(resp_ind,sind,h); % third arg is the shock index
@@ -98,7 +98,7 @@ function [irfa, irfb, cia, cib, pvala, pvalb, beta] = stateSVAR(y, I, p, hor, ri
         irf_comb(i,:,:) = theta_i;
 
         % (optional) store auxiliary variables
-        beta(i,:,:) = beta_temp;
+        beta(:,:,i) = beta_temp;
     end
 
     % retrieve IRFs

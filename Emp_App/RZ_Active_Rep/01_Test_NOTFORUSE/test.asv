@@ -184,7 +184,7 @@ elseif trend==0 %no trend
 end
 
 % settings
-bootstrap = 1;
+bootstrap = 0;
 nstraps=199;
 emp=0;
 
@@ -244,11 +244,21 @@ B = 500;
 pvala = squeeze(pval(1,:,:));
 pvalb = squeeze(pval(2,:,:));
 
-a = array2table(pvala', 'VariableNames',{'Gov Spending', 'GDP'})
+a = array2table(pvala', 'VariableNames',{'Gov Spending', 'GDP'});
 b = array2table(pvalb', 'VariableNames',{'Gov Spending', 'GDP'});
 %%
-output = evalc('disp(array2table(table2array(a), ''VariableNames'', a.Properties.VariableNames))');
-disp(output);
+fig = figure('Name', 'Table Display', 'NumberTitle', 'off', 'Position', [100, 100, 600, 400]);
+
+% Create a uitable in the figure
+t = uitable(fig, 'Data', table2cell(a), ...
+    'ColumnName', a.Properties.VariableNames, ...
+    'RowName', a.Properties.RowNames, ...
+    'Units', 'Normalized', ...
+    'Position', [0, 0, 1, 1]);
+
+% Adjust column widths automatically
+t.ColumnWidth = {'auto'};%% look at the distribution of bootstrap beta a
+
 
 %%
 bs_beta_dista = squeeze(bs_beta_dist(1,:,:,:));
@@ -269,11 +279,10 @@ y = y_tvar; % ordered as shock, gov, gdp
 I = fu;
 p=4;
 hor=20;
-B = 200;
 rind=[2,3]; % irfs to gov and GDP
 sind=1; % shock ordered first in the y vector
 
-[irfa, irfb, ~, ~, ~, ~, beta] = stateSVAR(y, I, p, hor,rind,sind, B);
+[irfa, irfb, ~, ~, ~, ~, beta] = stateSVAR(y, I, p, hor,rind,sind);
 
 close all
 shockchoice=1; % 1 means news shock; 2 means BP shock

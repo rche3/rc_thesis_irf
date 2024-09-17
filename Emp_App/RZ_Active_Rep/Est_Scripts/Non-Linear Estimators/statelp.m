@@ -1,4 +1,4 @@
-function [stateay, stateby, confidenceya, confidenceyb, bs_beta_dista, bs_beta_distb, pvala, pvalb]=statelp(data,x,hor,rpost,transformation, clevel, opt, bootstrap, emp, nlag, nstraps) 
+function [stateay, stateby, confidenceya, confidenceyb, bs_beta_dist, pval]=statelp(data,x,hor,rpost,transformation, clevel, opt, bootstrap, emp, nlag, nstraps) 
 
 % settings
 h0 = 0; % hypothesis for the pvalues
@@ -12,8 +12,7 @@ bs_cia = nan(2,hor,dsize);
 bs_cib = nan(2,hor,dsize);
 bs_beta_dista = nan(nstraps, dsize, hor);
 bs_beta_distb = nan(nstraps, dsize, hor);
-pvala = nan(dsize, hor);
-pvalb = nan(dsize, hor);
+pval = nan(2, dsize, hor);
 
 for j=1:dsize
     [r,nnn]=size(x);
@@ -64,8 +63,8 @@ for j=1:dsize
 
             % computes tau_b = (beta_b - \hat{beta})/SE_b(beta_b)
             % bs_pval takes in the bootstrapped estimate distribution, 
-            pvala(j,i) = bs_pval(bs_beta_dista, irfesta, h0); 
-            pvalb(j,i) = bs_pval(bs_beta_distb, irfestb, h0);
+            pval(1,j,i) = bs_pval(bs_beta_dista, irfesta, h0); 
+            pval(2,j,i) = bs_pval(bs_beta_distb, irfestb, h0);
 
             % store everything
             bs_beta_dista(:,j,i) = irf_bs_dista';
@@ -78,12 +77,14 @@ for j=1:dsize
                 [EstCov, hacse, coeff]=hac_alt(x(1:end-i+1,:), yy, 'intercept', false, 'smallT', false, 'display', 'off'); 
                 se(:,i)=hacse';
             end
-
+            
+            irfse_a = results.se(rpost);
+            irfse_b = results.se(rpost+1);
             % compute p values
-            tau_a = (irf_esta - h0) / ;
-            tau_b = irf_estb - h0
-            pvala(j,i) = 2*(1-normcdf(abs(tau_a)));
-            pvala(j,i) = 2*(1-normcdf(abs(tau_b)));
+            tau_a = (irf_esta - h0) / irfse_a;
+            tau_b = (irf_estb - h0) / irfse_b;
+            pval(1,j,i) = 2*(1-normcdf(abs(tau_a)));
+            pval(2,j,i) = 2*(1-normcdf(abs(tau_b)));
         end
     end
 
@@ -104,3 +105,6 @@ for j=1:dsize
     end
     
 end
+
+bs_beta_dist(1,:,:,:) = bs_beta_dista;
+bs_beta_dist(2,:,:,:) = bs_beta_distb;
