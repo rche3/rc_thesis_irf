@@ -1,4 +1,4 @@
-function [irfa, irfb, cia, cib, pvala, pvalb, beta] = stateSVAR(y, I, p, hor, rind, sind)
+function [irfa, irfb, cia, cib, pval, beta] = stateSVAR(y, I, p, hor, rind, sind)
 % STATESVAR computes the irfs and CIs for the state dependent vector autoregression
 % By default uses the Cholesky decomposition for SVAR identification
 % Inputs:
@@ -15,7 +15,7 @@ function [irfa, irfb, cia, cib, pvala, pvalb, beta] = stateSVAR(y, I, p, hor, ri
     % cib is the CI for State B
     % pvala is p-value for the State A estimated IRFs (against null of zero)
     % pvala is p-value for the State B estimated IRFs (against null of zero)
-    % beta is a 2 x [(Kp+1)xK] matrix of residuals
+    % beta is a 2 x (Kp+1) x K matrix of residuals
 
     %%%% FUNCTION START %%%%
     
@@ -33,16 +33,15 @@ function [irfa, irfb, cia, cib, pvala, pvalb, beta] = stateSVAR(y, I, p, hor, ri
     K = nvara;
     
     % create placeholder matrices
-    states = {'a', 'b'}; num_states = length(states);  % assuming 'state' is already defined
-    beta = cell(1, num_states);
-    resid = cell(1, num_states);
-    sigma_u = cell(1, num_states);
+    states = {'a','b'}; num_states = length(states);  % assuming 'state' is already defined
+    beta = zeros(num_states, K*p+1, K);
+    resid = cell(1,num_states);
+    sigma_u = cell(1,num_states);
 
     % output placeholders
     nresp = length(rind);
     irf_comb = zeros(length(states),nresp,hor);
-    pvala = zeros(nresp, hor);
-    pvalb = zeros(nresp, hor);
+    pval = zeros(2, nresp, hor);
 
     % COMPUTE IRFS
     for i=1:2
@@ -51,7 +50,7 @@ function [irfa, irfb, cia, cib, pvala, pvalb, beta] = stateSVAR(y, I, p, hor, ri
         xi = ['x' states{i}]; XX = eval(xi);
         TT = size(Y, 1);
         X = [ones(TT,1) XX];
-        beta_temp = inv(X'*X) * X' * Y;
+        beta_temp = inv(X'*X) * X' * Y; % (Kp+1) x K
 
         % Step 2: Obtain residuals and perform Cholesky decomposition
         resid_temp = Y - X * beta_temp;
@@ -98,9 +97,7 @@ function [irfa, irfb, cia, cib, pvala, pvalb, beta] = stateSVAR(y, I, p, hor, ri
         irf_comb(i,:,:) = theta_i;
 
         % (optional) store auxiliary variables
-        beta{i} = beta_temp;
-        resid{i} = resid_temp;
-        sigma_u{i} = sigma_u_temp;
+        beta(i,:,:) = beta_temp;
     end
 
     % retrieve IRFs

@@ -21,7 +21,7 @@ end
 
 % POINT ESTIMATES
 [lpa, lpb, ~, ~, ~, ~] = statelp(data,x,hor,rpost,transformation, clevel, opt, bootstrap, emp, p, nstraps);
-[svara, svarb, ~, ~, ~, ~, beta] = stateSVAR(y_tvar,I,nlag,hor,rind,sind, B);
+[svara, svarb, ~, ~, ~, beta] = stateSVAR(y_tvar,I,nlag,hor,rind,sind);
 stateay = w * lpa + (1-w) * svara;
 stateby = w * lpb + (1-w) * svarb;
 
@@ -57,18 +57,15 @@ end
 res = ty_tvar - yhat_tvar;
 
 % (convert to dependent wild)
-eps = generate_dwb_resid(res, bw, dwb_settings);
-% for i=1:K
-%     eps(:,i) = generate_dwb_resid(res(:,i), bw, dwb_settings);
-% end
-
-eps = res;
+for i=1:K
+    eps(:,i) = generate_dwb_resid(res(:,i), bw, dwb_settings);
+end
 
 % Bootstrap for loop
-% % % ki = 3;
-% % % figure;
-% % % plot(y_tvar(:,ki), 'LineStyle','-')
-% % % hold on;
+ki = 3;
+figure;
+plot(y_tvar(:,ki), 'LineStyle','-')
+hold on;
 
 for b=1:B
     y_bs = zeros(T,K); % we compute a T x K dependent variable via RFVAR DGP 
@@ -82,29 +79,32 @@ for b=1:B
             lagy_bs = [lagy_bs, y_bs(j-l,:)];
         end
         x_bs = [1, lagy_bs];
-        res = [eps(j,1) res_samp(j,2:3)];
+        res = res_samp(j,:);
         y_bs(j,:) = (x_bs*I(j))*beta_a + (x_bs*(1-I(j)))*beta_b + res;
     end
-% % %     plot(y_bs(:,ki), 'LineStyle','--')
+    plot(y_bs(:,ki), 'LineStyle','--')
     % (state dependent LP irfs)
     data_temp = y_bs(:,rind);
     shock_temp = y_bs(:,sind);
     x_temp = lagmatrix(y_bs, [1:nlag]);
     
-    shock_temp = shock_temp(nlag+1:end,:); % drop p observations
-    data_temp = data_temp(nlag+1:end,:); % drop p observations
-    x_temp = x_temp(nlag+1:end,:); % drop p observations (NaN)
+    data_temp = data_temp(nlag+1:end,:)
+    x_temp = x_temp(nlag+1:end,:)
     constant = ones(TT,1);
-    x_temp = [constant, (1-tI).*constant, tI.*shock_temp, (1-tI).*shock_temp, repmat(tI,1,size(x_temp,2)).*x_temp, repmat((1-tI),1,size(x_temp,2)).*x_temp]; % assume no trend
+    x_temp = [constant, (1-I).*constant, I.*shock_temp, (1-I).*shock_temp, repmat(I,1,size(x_temp,2)).*x_temp, repmat((1-I),1,size(x_temp,2)).*x_temp]; % assume no trend
     [lpa_temp, lpb_temp, ~, ~, ~, ~] = statelp(data_temp,x_temp,hor,rpost,transformation, clevel, opt, bootstrap, emp, nlag, nstraps);
 
     % (TVAR irfs)
-    [svara_temp, svarb_temp, ~, ~, ~, ~] = stateSVAR(y_bs,I,nlag,hor,rind,sind, B);
+    [svara_temp, svarb_temp, ~, ~, ~, ~] = stateSVAR(y_bs,I,nlag,hor,rind,sind);
     
     % (store in irf distribution)
     bs_beta_dista(b,:,:) = w*lpa_temp + (1-w) * svara_temp;
     bs_beta_distb(b,:,:) = w*lpb_temp + (1-w) * svarb_temp;
 end
+
+
+
+
 
 for ri=1:r
     for hi=1:hor
