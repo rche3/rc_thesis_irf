@@ -41,6 +41,7 @@ hold on
 plot(1:1:hor, recirf(:,1), 'r-o', 1:1:hor, recirf(:,2), 'r--', 1:1:hor,  recirf(:,3), 'r--', 'LineWidth', 1.5);
 title('Recession-dependent: Government spending')
 axis tight
+
 subplot(2,2,2)
 grpyat=[(1:1:hor)', nonrecirf(:,5); (hor:-1:1)' nonrecirf(hor:-1:1,6)];
 patch(grpyat(:,1), grpyat(:,2), [0.7 0.7 0.7],'edgecolor', [0.7 0.7 0.7]);
@@ -66,6 +67,8 @@ plot(1:1:hor, zlbirf(:,1), 'r-o', 1:1:hor, zlbirf(:,2), 'r--', 1:1:hor,  zlbirf(
 xlabel('quarter')
 title('ZLB-dependent: Government spending')
 axis tight
+
+
 subplot(2,2,4)
 grpyat=[(1:1:hor)', nonzlbirf(:,5); (hor:-1:1)' nonzlbirf(hor:-1:1,6)];
 patch(grpyat(:,1), grpyat(:,2), [0.7 0.7 0.7],'edgecolor', [0.7 0.7 0.7]);

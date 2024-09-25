@@ -21,7 +21,7 @@ end
 
 % POINT ESTIMATES
 [lpa, lpb, ~, ~, ~, ~] = statelp(data,x,hor,rpost,transformation, clevel, opt, bootstrap, emp, p, nstraps);
-[svara, svarb, ~, ~, ~, ~, beta] = stateSVAR(y_tvar,I,nlag,hor,rind,sind, B);
+[svara, svarb, ~, ~, ~, ~, beta] = stateSVAR(y_tvar,I,nlag,hor,rind,sind, B, 0,clevel);
 stateay = w * lpa + (1-w) * svara;
 stateby = w * lpb + (1-w) * svarb;
 
@@ -64,12 +64,6 @@ eps = generate_dwb_resid(res, bw, dwb_settings);
 
 eps = res;
 
-% Bootstrap for loop
-% % % ki = 3;
-% % % figure;
-% % % plot(y_tvar(:,ki), 'LineStyle','-')
-% % % hold on;
-
 for b=1:B
     y_bs = zeros(T,K); % we compute a T x K dependent variable via RFVAR DGP 
     y_bs(1:p,:) = y_tvar(1:p,:);
@@ -82,10 +76,10 @@ for b=1:B
             lagy_bs = [lagy_bs, y_bs(j-l,:)];
         end
         x_bs = [1, lagy_bs];
-        res = [eps(j,1) res_samp(j,2:3)];
+        res = res_samp(j,:);
+%         res = [eps(j,1) res_samp(j,2:3)];
         y_bs(j,:) = (x_bs*I(j))*beta_a + (x_bs*(1-I(j)))*beta_b + res;
     end
-% % %     plot(y_bs(:,ki), 'LineStyle','--')
     % (state dependent LP irfs)
     data_temp = y_bs(:,rind);
     shock_temp = y_bs(:,sind);
@@ -99,7 +93,7 @@ for b=1:B
     [lpa_temp, lpb_temp, ~, ~, ~, ~] = statelp(data_temp,x_temp,hor,rpost,transformation, clevel, opt, bootstrap, emp, nlag, nstraps);
 
     % (TVAR irfs)
-    [svara_temp, svarb_temp, ~, ~, ~, ~] = stateSVAR(y_bs,I,nlag,hor,rind,sind, B);
+    [svara_temp, svarb_temp, ~, ~, ~, ~] = stateSVAR(y_bs,I,nlag,hor,rind,sind, B, 0, clevel);
     
     % (store in irf distribution)
     bs_beta_dista(b,:,:) = w*lpa_temp + (1-w) * svara_temp;

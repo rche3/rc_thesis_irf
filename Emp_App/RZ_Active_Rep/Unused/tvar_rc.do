@@ -72,7 +72,6 @@ gen g = rgov/`ynorm';
  
 gen bp = g; /* Blanchard-Perotti shock is just orthogonalized current g */
 
-
 * Calculate mean, median, etc. of slack duration;
 /*
 tsspell slack, end(hrend) seq(hrseq);
@@ -95,14 +94,19 @@ add trends:  var newsy g y taxy if ..., lags(1/4) exog(t t2);
 *******************************************************************************/
 
 /* Military News identification;*/
+var newsy g  y if L.recession== 1, lags(1/4)
+irf create irf, step(20) set(irf, replace)
+irf table oirf, impulse(newsy) response(newsy g y)
+irf graph oirf, impulse(newsy) response(newsy g  y) byopts(rescale) saving(newsslack.gph, replace)
 
-var newsy g  y if L.recession== 1, lags(1/4);
-irf create irf, step(20) set(irf, replace);
-irf table oirf, impulse(newsy) response(newsy g y) ;
-irf graph oirf, impulse(newsy) response(newsy g  y) byopts(rescale) saving(newsslack.gph, replace);
+* Estimate VAR model
+var newsy g y if L.recession == 1, lags(1/4)
+irf create irf, step(20) bs reps(1000) set(irf, replace)
+irf table oirf, impulse(newsy) response(newsy g y) stderr
+irf graph oirf, impulse(newsy) response(newsy g y) lstep(0)
 
 
-var newsy g  y if L.recession== 0, lags(1/4);
-irf create irf, step(20) set(irf, replace);
-irf table oirf, impulse(newsy) response(newsy g y) ;
-irf graph oirf, impulse(newsy) response(newsy g  y) byopts(rescale) saving(newsnoslack.gph, replace);
+*var newsy g  y if L.recession== 0, lags(1/4)
+*irf create irf, step(20) set(irf, replace)
+*irf table oirf, impulse(newsy) response(newsy g y)
+*irf graph oirf, impulse(newsy) response(newsy g  y) byopts(rescale) saving(newsnoslack.gph, replace)
