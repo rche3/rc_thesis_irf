@@ -12,4 +12,6 @@ function p = bs_pval(bs_dist,beta, h0)
     tau_b = (beta - beta + h0)/bs_se;
 
     % compute p as the proportion of 
+    
+    
 end

@@ -54,16 +54,16 @@ L = length(irfTypes);
 
 %% Compute IRFs
 % key settings
-bootstrap = 0;
-nstraps = 199;
 emp = 0;
 p = nlag;
 lambda = 0.5;
+nstraps = 200;
 
 e=1; est=irfTypes{e}; 
 % STATE DEPENDENT LP
 x=xorig;
 In=fu(nlag+1:end);
+bootstrap = 0;
 if trend==4 % allow quartic trend
     x=[t', tsq', tcu', tqu', constant, (1-In).*constant, In.*shock, (1-In).*shock, repmat(In,1,size(x,2)).*x, repmat((1-In),1,size(x,2)).*x];
     rpost=7; 
@@ -74,7 +74,7 @@ elseif trend==0 %no trend
     x=[constant, (1-In).*constant, In.*shock, (1-In).*shock, repmat(In,1,size(x,2)).*x, repmat((1-In),1,size(x,2)).*x];
     rpost=3; % position of shock
 end
-[nlr.IRFa.(est), nlr.IRFb.(est), ~,~,~, nlr.pval.(est)]=statelp(data,x,hor,rpost,transformation, clevel, opt, bootstrap, emp, p, nstraps); 
+[nlr.IRFa.(est), nlr.IRFb.(est), nlr.CIa.(est), nlr.CIb.(est),~, nlr.pval.(est)]=statelp(data,x,hor,rpost,transformation, clevel, opt, bootstrap, emp, p, nstraps); 
 
 e=2; est = irfTypes{e};
 % SVAR
@@ -83,45 +83,77 @@ y = y_tvar;
 p = nlag;
 rind = [2:3];
 sind = 1;
-[nlr.IRFa.(est), nlr.IRFb.(est), ~, ~, ~, nlr.pval.(est), ~] = stateSVAR(y,I,p,hor,rind,sind, nstraps);
+bootstrap = 1;
+[nlr.IRFa.(est), nlr.IRFb.(est),nlr.CIa.(est), nlr.CIb.(est), ~, nlr.pval.(est), ~] = stateSVAR(y,I,p,hor,rind,sind, nstraps, bootstrap, clevel);
 
 e=3; est = irfTypes{e};
 % SVAR / LP MODEL AVG
-[nlr.IRFa.(est), nlr.IRFb.(est), ~, ~, ~, nlr.pval.(est)] = stateSVARLP_avg(hor, nlag, nstraps, lambda, ...
+[nlr.IRFa.(est), nlr.IRFb.(est), nlr.CIa.(est), nlr.CIb.(est), nlr.bsdist.(est), nlr.pval.(est)] = stateSVARLP_avg(hor, nlag, nstraps, lambda, ...
     data,x,rpost,transformation, clevel, opt, ...
     y, I, rind, sind);
 
 %% Figure 5 - Non Linear IRFs
-zz=zeros(1,hor);
-figure(5);
 close all
-for j=1:L
-    i=1;
-    subplot(2,L,j)
-    plot(1:1:hor, zz, 'k-', 'HandleVisibility','off')
-    hold on
-    plot(1:1:hor, nlr.IRFa.(irfTypes{j})(i,:), 'b--',1:1:hor, nlr.IRFb.(irfTypes{j})(i,:), 'r-o','LineWidth', 1.5)
-    axis tight
-    ylabel('Government spending')
-    xlabel('Horizon (Quarters)')
-    legend([irfTypes{j}, ' State A'], [irfTypes{j}, ' State B'])
+zz=zeros(1,hor);
+f5 = figure;
+ylabels = {'Government Spending', 'GDP'};
 
-    i=2;
-    subplot(2,L,j+L)
-    plot(1:1:hor, zz, 'k-', 'HandleVisibility','off')
-    hold on
-    plot(1:1:hor, nlr.IRFa.(irfTypes{j})(i,:), 'b--',1:1:hor, nlr.IRFb.(irfTypes{j})(i,:), 'r-o','LineWidth', 1.5)
-    axis tight
-    ylabel('GDP')
-    xlabel('Horizon (Quarters)')
-    legend([irfTypes{j}, ' State A'], [irfTypes{j}, ' State B'])
+for j=1:L
+    est = irfTypes{j};
+    for i=1:2
+        subplot(2,L,j+L*(i-1))
+        plot(1:1:hor, zz, 'k-', 'HandleVisibility','off')
+        hold on
+        plot(1:1:hor, nlr.IRFa.(est)(i,:), 'b-', ...
+             1:1:hor, squeeze(nlr.CIa.(est)(1,i,:)), 'b--', ...
+             1:1:hor, squeeze(nlr.CIa.(est)(2,i,:)), 'b--');
+        plot(1:1:hor, nlr.IRFb.(est)(i,:), 'r-', ...
+             1:1:hor, squeeze(nlr.CIb.(est)(1,i,:)), 'r--', ...
+             1:1:hor, squeeze(nlr.CIb.(est)(2,i,:)), 'r--');
+        axis tight
+        ylabel(ylabels{i})
+        xlabel('Horizon (Quarters)')
+        title(est)
+        legend('A: Point', 'A: 95% CI Lower', 'A: 95% CI Upper', 'B: Point', 'B: 95% CI Lower', 'B: 95% CI Upper')
+    end
 end
 sgtitle('State Dependent Point Estimates')
 
+set(f5, 'Position', [100, 100, 1200, 800])
+% saveas(f5,'fig/lp_var_mdlavg_point_est.png')
+
 %% P value table
-est = 'SVARLPAvg';
 state = 1; % 1 for State A, 2 for State B
+
+est = 'SVARLPAvg';
 
 pval = squeeze(nlr.pval.(est)(state,:,:));
 a = array2table(pval', 'VariableNames',{'Gov Spending', 'GDP'})
+
+fig = figure;
+subplot(1,2,1)
+bar(pval(1,:))
+legend('Gov Spend')
+subplot(1,2,2)
+bar(pval(2,:))
+legend('GDP')
+sgtitle(strcat('Two Tailed P Values vs Horizon for:', est));
+
+% saveas(fig, 'fig/SVARLP_Pval_BS.png')
+
+%% Look at distribution of bootstrap irfs for SVAR LP Avg
+est = 'SVARLPAvg';
+state = 1; % 1 for State A, 2 for State B
+temphor = 1;
+tempresp = 1;
+
+bs_irf_dist = nlr.bsdist.(est)(state,:,tempresp, temphor);
+point_est = nlr.IRFa.SVARLPAvg(tempresp, temphor);
+
+figure;
+hist(bs_irf_dist, 20)
+hold on
+vline(point_est)
+
+
 

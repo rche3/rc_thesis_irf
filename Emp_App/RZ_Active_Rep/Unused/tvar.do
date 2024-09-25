@@ -108,59 +108,58 @@ add trends:  var newsy g y taxy if ..., lags(1/4) exog(t t2);
 
 /* Military News identification;*/
 
-var newsy g  y if L.zlb== 1, lags(1/4);
-varstable, graph name(stability);
-irf create irf, step(20) set(irf, replace);
-irf table oirf, impulse(newsy) response(newsy g y) ;
-irf graph oirf, impulse(newsy) response(newsy g  y) byopts(rescale) saving(newszlb.gph, replace);
+var newsy g  y if L.zlb== 1, lags(1/4)
+varstable, graph name(stability)
+irf create irf, step(20) set(irf, replace)
+irf table oirf, impulse(newsy) response(newsy g y)
+irf graph oirf, impulse(newsy) response(newsy g  y) byopts(rescale) saving(newszlb.gph, replace)
 
-var newsy g  y if L.zlb== 0, lags(1/4);
-varstable, graph name(stability2);
-irf create irf, step(20) set(irf, replace);
-irf table oirf, impulse(newsy) response(newsy g y) ;
-irf graph oirf, impulse(newsy) response(newsy g  y) byopts(rescale) saving(newsnozlb.gph, replace);
-
-
-var newsy g  y if L.recession== 1, lags(1/4);
-varstable, graph name(stability3);
-irf create irf, step(20) set(irf, replace);
-irf table oirf, impulse(newsy) response(newsy g y) ;
-irf graph oirf, impulse(newsy) response(newsy g  y) byopts(rescale) saving(newsslack.gph, replace);
-
-
-var newsy g  y if L.recession== 0, lags(1/4);
-varstable, graph name(stability4);
-irf create irf, step(20) set(irf, replace);
-irf table oirf, impulse(newsy) response(newsy g y) ;
-irf graph oirf, impulse(newsy) response(newsy g  y) byopts(rescale) saving(newsnoslack.gph, replace);
+var newsy g  y if L.zlb== 0, lags(1/4)
+varstable, graph name(stability2)
+irf create irf, step(20) set(irf, replace)
+irf table oirf, impulse(newsy) response(newsy g y)
+irf graph oirf, impulse(newsy) response(newsy g  y) byopts(rescale) saving(newsnozlb.gph, replace)
+//
+// var newsy g  y if L.recession== 1, lags(1/4)
+// varstable, graph name(stability3)
+// irf create irf, step(20) set(irf, replace)
+// irf table oirf, impulse(newsy) response(newsy g y)
+// irf graph oirf, impulse(newsy) response(newsy g  y) byopts(rescale) saving(newsslack.gph, replace)
+//
+//
+// var newsy g  y if L.recession== 0, lags(1/4)
+// varstable, graph name(stability4)
+// irf create irf, step(20) set(irf, replace)
+// irf table oirf, impulse(newsy) response(newsy g y)
+// irf graph oirf, impulse(newsy) response(newsy g  y) byopts(rescale) saving(newsnoslack.gph, replace)
 
 
 * Blanchard-Perotti identification;
 
 
-var g y if L.zlb == 1 , lags(1/4); 
-varstable, graph name(stability5);
-irf create irfbpzlb, step(20) set(bpirf, replace);
-irf table oirf, impulse(g) response( g y) ;
-irf graph oirf, impulse(g) response(g y) byopts(rescale) saving(bpzlb.gph, replace);
-
-
-var g y if L.zlb == 0, lags(1/4) ; 
-varstable, graph name(stability6);
-irf create irfbpnozlb, step(20) set(bpirf, replace);
-irf table oirf, impulse(g) response( g y) ;
-irf graph oirf, impulse(g) response(g y) byopts(rescale) saving(bpnozlb.gph, replace);
-
-
-var g y if L.recession == 1, lags(1/4) ; 
-irf create irfbpslack, step(20) set(bpirf, replace);
-irf table oirf, impulse(g) response( g y) ;
-irf graph oirf, impulse(g) response(g y) byopts(rescale) saving(bpslack.gph, replace);
-
-var g y if L.recession == 0, lags(1/4) ; 
-irf create irfbpnoslack, step(20) set(bpirf, replace);
-irf table oirf, impulse(g) response( g y) ;
-irf graph oirf, impulse(g) response(g y) byopts(rescale) saving(bpnoslack.gph, replace);
+// var g y if L.zlb == 1 , lags(1/4); 
+// varstable, graph name(stability5);
+// irf create irfbpzlb, step(20) set(bpirf, replace);
+// irf table oirf, impulse(g) response( g y) ;
+// irf graph oirf, impulse(g) response(g y) byopts(rescale) saving(bpzlb.gph, replace);
+//
+//
+// var g y if L.zlb == 0, lags(1/4) ; 
+// varstable, graph name(stability6);
+// irf create irfbpnozlb, step(20) set(bpirf, replace);
+// irf table oirf, impulse(g) response( g y) ;
+// irf graph oirf, impulse(g) response(g y) byopts(rescale) saving(bpnozlb.gph, replace);
+//
+//
+// var g y if L.recession == 1, lags(1/4) ; 
+// irf create irfbpslack, step(20) set(bpirf, replace);
+// irf table oirf, impulse(g) response( g y) ;
+// irf graph oirf, impulse(g) response(g y) byopts(rescale) saving(bpslack.gph, replace);
+//
+// var g y if L.recession == 0, lags(1/4) ; 
+// irf create irfbpnoslack, step(20) set(bpirf, replace);
+// irf table oirf, impulse(g) response( g y) ;
+// irf graph oirf, impulse(g) response(g y) byopts(rescale) saving(bpnoslack.gph, replace);
 
 
 /*

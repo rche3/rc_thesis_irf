@@ -1,4 +1,4 @@
-function [irfa, irfb, cia, cib, bs_beta_dist, pval, beta] = stateSVAR(y, I, p, hor, rind, sind, B)
+function [irfa, irfb, cia, cib, bs_beta_dist, pval, beta] = stateSVAR(y, I, p, hor, rind, sind, B, bootstrap, clevel, method)
 % STATESVAR computes the irfs and CIs for the state dependent vector autoregression
 % By default uses the Cholesky decomposition for SVAR identification
 % Inputs:
@@ -8,6 +8,10 @@ function [irfa, irfb, cia, cib, bs_beta_dist, pval, beta] = stateSVAR(y, I, p, h
     % hor is the IRF horizon
     % rind are the indices of the variables in y to compute IRFs for
     % sind is the shock location in k-dimensional time series
+    % B is the number of bootstrap reps
+    % bootstrap is 1 or 0 (compute bootstrap SEs or just leave blank to prevent infinite recursion)
+    % clevel is the confidence level e.g. 1.96 for 5% two sided
+    % method is the method for calculating CIs
 % Outputs:
     % irfa is the (2 x hor) impulse response for State A
     % irfb is the (2 x hor) impulse response for State B
@@ -43,6 +47,8 @@ function [irfa, irfb, cia, cib, bs_beta_dist, pval, beta] = stateSVAR(y, I, p, h
     irf_comb = zeros(length(states),r,hor);
     pval = nan(2,r,hor);
     bs_beta_dist = nan(2,B,r,hor);
+    cia = nan(2,r,hor);
+    cib = nan(2,r,hor);
 
     % COMPUTE IRFS
     for i=1:2
@@ -105,10 +111,51 @@ function [irfa, irfb, cia, cib, bs_beta_dist, pval, beta] = stateSVAR(y, I, p, h
     irfa = squeeze(irf_comb(1,:,:));
     irfb = squeeze(irf_comb(2,:,:));
 
-    % placeholders CIs
-    cia(1,:,:) = irfa * 1.1;
-    cia(2,:,:) = irfa * 0.9;
-    cib(1,:,:) = irfb * 1.1;
-    cib(2,:,:) = irfb * 0.9;
+    % Step 5: Bootstrap inference
+    if bootstrap == 1
+        beta_a = beta(:,:,1); beta_b = beta(:,:,2);
+        irf_bs_beta = stateSVAR_bse(y, I, beta_a, beta_b, p, hor, B, sind, rind);
+        
+        bsirf_a = squeeze(irf_bs_beta(:,:,:,1));
+        bsirf_b = squeeze(irf_bs_beta(:,:,:,2));
+        
+        switch method
+            case "normal"
+                sea = zeros(r,hor);
+                seb = zeros(r,hor);
+                for ri=1:r
+                    for hi=1:hor
+                        bsvec_a = squeeze(bsirf_a(:,ri,hi));
+                        sea(ri,hi) = std(bsvec_a);
+                        bsvec_b = squeeze(bsirf_b(:,ri,hi));
+                        seb(ri,hi) = std(bsvec_b);
+                    end
+                end
+                cia(1,:,:) = irfa - clevel * sea;
+                cia(2,:,:) = irfa + clevel * sea;
+                cib(1,:,:) = irfb - clevel * seb;
+                cib(2,:,:) = irfb + clevel * seb;
+            case "percentile"
+                % Calculate cia and cib for percentile method
+                alpha = 1 - normcdf(clevel);
+                for ri=1:r
+                    for hi=1:hor
+                        bsvec_a = squeeze(bsirf_a(:,ri,hi));
+                        bsvec_b = squeeze(bsirf_b(:,ri,hi));
+                        cia(1,ri,hi) = quantile(bsvec_a, alpha);
+                        cia(2,ri,hi) = quantile(bsvec_a, 1-alpha);
+                        cib(1,ri,hi) = quantile(bsvec_b, alpha);
+                        cib(2,ri,hi) = quantile(bsvec_b, 1-alpha);
+                    end
+                end
+            otherwise
+                error('Invalid method specified. Use "normal" or "percentile"')
+        end        
+    else
+        cia(1,:,:) = nan(size(cia,2), size(cia,3));
+        cia(2,:,:) = nan(size(cia,2), size(cia,3));
+        cib(1,:,:) = nan(size(cib,2), size(cib,3));
+        cib(2,:,:) = nan(size(cib,2), size(cib,3));
+    end
 end
 
