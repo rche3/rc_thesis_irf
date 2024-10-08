@@ -24,7 +24,7 @@ lambda_opt = lambdaRange(lambda_opt_loc); % optimally tuned lambda
 
 % re-estimate IRF via penalized LP using the full sample
 IRF_resp = locproj(y, x, w, H_min, H_max, r, lambda_opt); % IRF to one unit of shock
-IRF_normalize = IRF_LP(Y,recursiveShock,normalizeV,nlags,0) % response of normalization variable estimated by least-squares LP
+IRF_normalize = IRF_LP(Y,recursiveShock,normalizeV,nlags,0); % response of normalization variable estimated by least-squares LP
 IRF = IRF_resp / IRF_normalize; % normalize by response of normalization variable
 
 end

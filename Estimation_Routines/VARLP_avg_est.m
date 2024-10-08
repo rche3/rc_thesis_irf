@@ -1,5 +1,4 @@
 function [IRF,n_lags_est,largest_root,LM_stat,LM_pvalue,Hausman_stat,Hausman_pvalue,Granger_stat,Granger_pvalue] = VARLP_avg_est(data_sim,settings,bias_corrected);
-    disp('estimating model averaged now!')
     %   Detailed explanation goes here
     run('Estimation_Setup'); % common setup for all estimation methods
 
