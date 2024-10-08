@@ -54,9 +54,9 @@ elseif trend==0
 end
 
 % Generate the standard LP IRFs
-B = 400;
-
-[liny, confidencey]=linlp_rc(data,x,hor,rpos,transformation,clevel,opt,0,nlag, B);
+B = 199;
+bootstrap=0; emp=0;
+[liny, confidencey]=linlp_rc(data,x,hor,rpos,transformation,clevel,opt,bootstrap,nlag, B,emp);
 
 se = zeros(2,hor);
 for i=1:2
@@ -66,7 +66,8 @@ end
 %%% Compute Bootstrap SEs
 clear bs_confidencey
 emp = 0; % 1 = use empirical dist of bootstrap betas, 0 = sample variance
-[liny, bs_confidencey, bs_beta_means, bs_beta_dist] = linlp_rc(data,x,hor,rpos,transformation, clevel, opt, 1, nlag, B, emp);
+bootstrap=1;
+[liny, bs_confidencey, bs_beta_means, bs_beta_dist] = linlp_rc(data,x,hor,rpos,transformation, clevel, opt, bootstrap, nlag, B, emp);
 bs_se = zeros(2,hor);
 for i=1:2
     bs_se(i, :) = abs(liny(1,:) - bs_confidencey(1,:,1))/clevel;
@@ -151,7 +152,7 @@ legend('empirical (smoothed) dist', 'nwest dist')
 close all
 zz=zeros(1,hor);
 i=1;
-figure(1)
+fig1 = figure(1)
 subplot(2,1,1)
 hold on
 % plot CIs - analytical
@@ -185,6 +186,11 @@ ylabel('GDP')
 xlabel('quarter')
 legend('Analytical CI', 'BS CI', 'Point Estimates')
 
+fig1.Position = [100 100 800 800];  % [left bottom width height]
+
+sgtitle('Comparison between Analytical (Newey West) CIs and Dependent Wild Bootstrap for LINEAR CASE')
+
+saveas(fig1, 'Fig/linear_lp_dwb_nw.png')
 
 %% Check convergence of bootstrap means
 

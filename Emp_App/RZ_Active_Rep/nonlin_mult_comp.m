@@ -43,7 +43,6 @@ run('figure_irfs_multipliers_setup.m')
 %NON-LINEAR
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 nlr = struct(); % struct to store estimates for non linear results (nlr)
 
 % compute the IRFs now with various methods
@@ -117,7 +116,7 @@ for j=1:L
         legend('A: Point', 'A: 95% CI Lower', 'A: 95% CI Upper', 'B: Point', 'B: 95% CI Lower', 'B: 95% CI Upper')
     end
 end
-sgtitle('State Dependent Point Estimates')
+sgtitle('State Dependent IRF Estimates')
 
 set(f5, 'Position', [100, 100, 1200, 800])
 % saveas(f5,'fig/lp_var_mdlavg_point_est.png')

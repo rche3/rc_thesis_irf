@@ -19,7 +19,13 @@ for i = 1:length(estimand_vars)
         assignin('base', 'dgp_type', dgp);
         
         % Run your script (run_dfm.m)
-        run_dfm;
+        try
+            run('run_dfm.m');
+        catch ME
+            disp(['Error running run_dfm.m: ' ME.message]);
+            % Optionally, you can display more error details:
+            % disp(getReport(ME));
+        end
 
         % clearvars
         

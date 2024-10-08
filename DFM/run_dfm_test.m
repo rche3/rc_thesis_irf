@@ -5,7 +5,7 @@
 
 cd /Users/rogerchen/Documents/MATLAB/rc_thesis_irf/DFM/
 % clc
-% clear all
+clear all
 close all
 
 addpath(genpath(fullfile('..', 'Auxiliary_Functions')))
@@ -165,7 +165,6 @@ disp(['specification choice set id: ', num2str(spec_id)]);
 disp(['dgp type: ', dgp_type]);
 disp(['estimand type: ', estimand_type]);
 disp(['lag type: ', num2str(lag_type)]);
-
 
 
 parfor i_MC = 1:settings.simul.n_MC

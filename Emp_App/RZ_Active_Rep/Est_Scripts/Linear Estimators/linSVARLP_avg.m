@@ -1,23 +1,45 @@
-function [liny, confidencey] = linSVARLP_avg(data,x,hor,rpos,transformation, clevel, opt, nlag, bias_corrected, bootstrap)
-%VARLP_AVG Summary of this function goes here
-%   Detailed explanation goes here
-
-    [irf_var, ~] = linSVAR(data,x,hor,rpos,transformation, clevel, opt, nlag, bias_corrected);
-    [irf_lp, ~] = linlp(data,x,hor,rpos,transformation, clevel, opt, nlag, bootstrap);
-
-%     disp(irf_var)
-%     disp(irf_lp)
+function [liny, confidencey] = linSVARLP_avg(hor, p, method, clevel, nstraps, lambda, ... % general inputs
+    data,x,rpos,transformation, opt, ... % LP inputs
+    y,rind, sind, normalise) % VAR inputs
+% linSVARLP_avg computes the averaged estimator for SVAR and LP irfs 
     
-    % S.E. TBD
-    var_weight = 0.5;
+    var_bootstrap = 1;
+    lp_bootstrap = 0;
+    [irf_var, ~, beta] = linSVAR(y,hor,p,rind,sind,clevel,var_bootstrap,nstraps,normalise);
+    [irf_lp, ~] = linlp(data,x,hor,rpos,transformation, clevel, opt, lp_bootstrap,p,nstraps, method);
+    
+    var_weight = lambda;
     liny = irf_var * var_weight + irf_lp * (1-var_weight);
-    se = abs(0.01 * liny(1, 1));
     
     [dr, dsize] = size(data);
-    for j = 1:dsize
-        sey(j, :) = se;
-        confidencey(1,:,j)=liny(j,:)-(sey(j,:)*clevel);
-        confidencey(2,:,j)=liny(j,:)+(sey(j,:)*clevel);
+
+    confidencey = zeros(2,dsize,hor);
+    r = length(rind);
+
+    % get bootstrap distribution from external function
+    irf_bs_dist = linSVARLP_avg_dwbse(y,beta,p,nstraps,hor, lambda, ...
+        rind, sind, ...
+        rpos, transformation, clevel, opt);
+    
+    for ri = 1:r
+        for hi = 1:hor
+            bs_vec = squeeze(irf_bs_dist(:,ri,hi)); % vector of bootstrapped irfs for specific reponse/horizon
+            switch method
+                case "normal"
+                    bs_se = var(bs_vec)^(1/2);
+                    irf_est = liny(ri,hi);
+                    confidencey(1,ri,hi) = irf_est - clevel * bs_se;
+                    confidencey(2,ri,hi) = irf_est + clevel * bs_se;
+                case "percentile"
+                    alpha = 1 - normcdf(clevel);
+                    upperq = quantile(bs_vec, (1-alpha));
+                    lowerq = quantile(bs_vec, alpha);
+                    confidencey(1,ri,hi) = lowerq;
+                    confidencey(2,ri,hi) = upperq;
+                otherwise 
+                    error('Invalid method specified. Use "normal" or "percentile"')
+            end
+        end
     end
 end
 

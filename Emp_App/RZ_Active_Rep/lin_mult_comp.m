@@ -9,7 +9,7 @@ addpath(genpath('Plots'));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 timesample=1; % 1 means 1889-2015; 2 means post WWII
-statechoice=1;  % 1 means default unemp threshold; 2 means default ZLB threshold
+statechoice=2;  % 1 means default unemp threshold; 2 means default ZLB threshold
 shockchoice=1; % 1 means news shock; 2 means BP shock
 transformation=1; % 1 means Gordon-Krenn; 2 means Hall-Barro-Redlick
 taxchoice=0; %0 means no taxes as control; 1 means ad taxy as a control
@@ -59,251 +59,81 @@ elseif trend==0
     rpos=2;
 end
 
-lin_results = struct(); % struct to store linear model results
+linres = struct(); % struct to store linear model results
 
 % compute the IRFs now with various methods
 irfTypes = {'LP', 'LP_BC', 'LP_Penalised', 'LP_Lagaug', 'SVAR', 'VARLP_Avg'};
+irfTypes = {'LP', 'SVAR', 'SVARLPAvg'};
 
-%% LP + Variants Estimation
-% standard LP
-[lin_results.IRF.LP, lin_results.CI.LP]=linlp(data,x,hor,rpos,transformation, clevel, opt, nlag, 1); liny = lin_results.IRF.LP; confidencey = lin_results.CI.LP;
-% bias correction
-[lin_results.IRF.LP_BC, lin_results.CI.LP_BC]=linlp_biascorrect(data,x,hor,rpos,transformation, clevel, opt);
-% penalised LP
-[lin_results.IRF.LP_Penalised, lin_results.CI.LP_Penalised]=linlp_penalised(data,x,hor,rpos,transformation, clevel, opt, nlag); 
-% lag-augmented LP
-[lin_results.IRF.LP_Lagaug, lin_results.CI.LP_Lagaug]=linlp(data(2:end, :),x_la,hor,rpos,transformation, clevel, opt, nlag, 1); % lagaug uses same script, different regressor
+L = length(irfTypes);
 
-%% VARS
-% VAR
-[lin_results.IRF.SVAR, lin_results.CI.SVAR] = linSVAR(data, x, hor, rpos, transformation, clevel, opt, nlag, 0);
-% VAR / LP Averaged (TBD)
-[lin_results.IRF.VARLP_Avg, lin_results.CI.VARLP_Avg] = VARLP_Avg(data, x, hor, rpos, transformation, clevel, opt, nlag, 0, 0);
+%% LP Estimation w/ DW Bootstrap
+bootstrap=1;
+nstraps = 100;
+method = 'normal';
+lambda = 0.5;
+p=nlag;
+
+%%% LP
+e=1; est=irfTypes{e};
+[linres.IRF.(est), linres.CI.(est)]=linlp(data,x,hor,rpos,transformation, clevel, opt, bootstrap, p, nstraps, method); 
+%% VAR Estimation w/ Bootstrap
+e=2; est=irfTypes{e};
+
+% var preliminaries
+normalise = 1;
+y = [x(:,rpos), data];
+p=nlag;
+rind = [2,3]; % location of response variables in y
+sind = 1; % location of shock variable in y
+nstraps = 1000;
+bootstrap = 1;
+[linres.IRF.(est), linres.CI.(est), ~] = linSVAR(y, hor, p, rind, sind, clevel, bootstrap, nstraps, normalise);
+
+%% VAR / LP Averaged
+e=3; est = irfTypes{e};
+
+% varlp setup
+method = 'normal';
+lambda = 0.5; % weight for VAR irfs
+nstraps = 100;
+[linres.IRF.(est), linres.CI.(est)] = linSVARLP_avg(hor,p, method, clevel, nstraps, lambda, ...
+    data,x,rpos,transformation,opt, ...
+    y, rind, sind, normalise);
 
 %%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %NON-LINEAR
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-clear x;
-x=xorig;
-fu=fu(nlag+1:end);
-
-if trend==4 % allow quartic trend
-    x=[t', tsq', tcu', tqu', constant, (1-fu).*constant, fu.*shock, (1-fu).*shock, repmat(fu,1,size(x,2)).*x, repmat((1-fu),1,size(x,2)).*x];
-    rpost=7; 
-elseif trend==2 % allow quadratic trend
-    x=[t', tsq', constant, (1-fu).*constant, fu.*shock, (1-fu).*shock, repmat(fu,1,size(x,2)).*x, repmat((1-fu),1,size(x,2)).*x];
-    rpost=5; 
-elseif trend==0 %no trend
-    x=[constant, (1-fu).*constant, fu.*shock, (1-fu).*shock, repmat(fu,1,size(x,2)).*x, repmat((1-fu),1,size(x,2)).*x];
-    rpost=3; % position of shock
-end
-
-[stateay, stateby, confidenceya, confidenceyb]=statelp_rz(data,x,hor,rpost,transformation, clevel, opt); 
-
-%% Poster figures - multipliers
-run('setup.m')
 close all
+zz=zeros(1,hor);
+linfig = figure;
+ylabels = {'Government Spending', 'GDP'};
 
-irf_fig = figure('Position', [100, 100, 800, 600])
-i=1;
-zz = zeros(1, hor);
-n = length(irfTypes);
-subplot(2,1,1)
-plot(1:1:hor, zz, 'k-', 'HandleVisibility', 'off') % plot line at y=0 to show x-axis
-hold on
-h = zeros(1, n);
-for j = 1:length(irfTypes)
-    irfType = irfTypes{j};
-    h(j) = plot(1:hor, lin_results.IRF.(irfType)(i,:), plotStyles{j}{:}, 'DisplayName', irfType);
-    hold on;
-end
-axis tight
-ylabel('Government Spending')
-lgd = legend('Location', 'northeast'); lgd.Interpreter = 'none'; 
+% Create an array to store axes handles
+ax = [];
 
-
-i=2;
-subplot(2,1,2)
-plot(1:1:hor, zz, 'k-', 'HandleVisibility', 'off') % plot line at y=0 to show x-axis
-hold on
-
-h = zeros(1, length(irfTypes));
-for k = 1:length(irfTypes)
-    irfType = irfTypes{k};
-    h(k) = plot(1:hor, lin_results.IRF.(irfType)(i,:), plotStyles{k}{:}, 'DisplayName', irfType);
-    hold on;
-end
-
-axis tight
-ylabel('GDP')
-lgd = legend('Location', 'northeast'); lgd.Interpreter = 'none'; 
-
-sgtitle('Impulse responses to GDP and Government spending for a military news shock')
-
-saveas(irf_fig, 'irf_estimates.png')
-
-for j = 1:length(irfTypes)
-    irfType = irfTypes{j};
-    lin_results.cum_mult.(irfType) = cumsum(lin_results.IRF.(irfType)(2, :)) ./ cumsum(lin_results.IRF.(irfType)(1, :));
-end
-
-figure(6)
-
-plot_cols = 4; plot_rows = ceil(length(irfTypes)/plot_cols);
-
-for i = 1:length(irfTypes)
-    irfType = irfTypes{i};
-    subplot(plot_rows, plot_cols, i)
-    hold on 
-    plot(1:1:hor, lin_results.cum_mult.(irfType), 'Color', line_colors{i}, 'LineWidth', 1.5, 'DisplayName', irfType); % plot point estimates for multiplier
-    axis tight
-    legend('Location', 'east')
-end
-
-sgtitle('Linear model: cumulative spending multiplier (point estimates) with different estimators');
-
-%% Figures
-run('setup.m') % load settings, colours etc. from this script
-close all
-
-% | Figure 5 - the IRFs to GDP and Gov. Spending, Linear Model ONLY |
-% -- Plot Gov Spending Response -- %
-i=1;
-figure(5)
-zz = zeros(1, hor);
-n = length(irfTypes);
-subplot(2,2,1)
-plot(1:1:hor, zz, 'k-', 'HandleVisibility', 'off') % plot line at y=0 to show x-axis
-hold on
-
-h = zeros(1, n);
-for j = 1:length(irfTypes)
-    irfType = irfTypes{j};
-    h(j) = plot(1:1:hor, lin_results.IRF.(irfType)(i,:), plotStyles{j}{:}, 'DisplayName', irfType);
-    hold on;
-end
-
-axis tight
-ylabel('Government Spending')
-lgd = legend('Location', 'northwest'); lgd.Interpreter = 'none'; 
-
-% BELOW NEEDS TO BE FIXED ONCE S.E.s are done
-subplot(2,2,2)
-grpyat=[(1:1:hor)', confidencey(1,:,i)'; (hor:-1:1)' confidencey(2,hor:-1:1,i)'];
-patch(grpyat(:,1), grpyat(:,2), [0.7 0.7 0.7],'edgecolor', [0.7 0.7 0.7]);
-hold on
-plot(1:1:hor, zz, 'k-', 'HandleVisibility', 'off')
-hold on 
-plot(1:1:hor, liny(i,:), 'k','LineWidth', 1.5)
-title('Linear')
-axis tight
-
-% -- Plot GDP Response -- %
-i=2;
-subplot(2,2,3)
-plot(1:1:hor, zz, 'k-', 'HandleVisibility', 'off') % plot line at y=0 to show x-axis
-hold on
-
-h = zeros(1, length(irfTypes));
-for j = 1:length(irfTypes)
-    irfType = irfTypes{j};
-    h(j) = plot(1:1:hor, lin_results.IRF.(irfType)(i,:), plotStyles{j}{:}, 'DisplayName', irfType);
-    hold on;
-end
-
-axis tight
-ylabel('GDP')
-lgd = legend('Location', 'northwest'); lgd.Interpreter = 'none'; 
-
-% BELOW NEEDS TO BE FIXED ONCE S.E.s are done
-subplot(2,2,4)
-grpyat=[(1:1:hor)', confidencey(1,:,i)'; (hor:-1:1)' confidencey(2,hor:-1:1,i)'];
-patch(grpyat(:,1), grpyat(:,2), [0.7 0.7 0.7],'edgecolor', [0.7 0.7 0.7]);
-hold on
-plot(1:1:hor, zz, 'k-', 'HandleVisibility', 'off')
-hold on 
-plot(1:1:hor, liny(i,:), 'k','LineWidth', 1.5)
-title('Linear')
-axis tight
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %Multipliers: HAVE EDITED LINEAR ONLY
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% compute linear multipliers
-for j = 1:length(irfTypes)
-    irfType = irfTypes{j};
-    lin_results.cum_mult.(irfType) = cumsum(lin_results.IRF.(irfType)(2, :)) ./ cumsum(lin_results.IRF.(irfType)(1, :));
-end
-
-cum_mult_statea= cumsum(stateay(2,:))./cumsum(stateay(1,:));
-cum_mult_stateb= cumsum(stateby(2,:))./cumsum(stateby(1,:));
-
-% reads the multiplier standard errors that are computed via STATA
-if shockchoice==1 % newsy
-    std1=xlsread('Multiplier-Standard-Errors.xlsx',2);
-    stdlin=std1(1:20,3);
-    if statechoice==1 % slack
-        std2=xlsread('Multiplier-Standard-Errors.xlsx',2);
-        stdb=std2(1:20,5);
-        stda=std2(1:20,7);
-    elseif statechoice==2 % ZLB
-        std2=xlsread('Multiplier-Standard-Errors.xlsx',3);
-        stdb=std2(1:20,5);
-        stda=std2(1:20,7);
-    end
-else
-    std1=xlsread('Multiplier-Standard-Errors.xlsx',4);
-    stdlin=std1(1:20,3);
-    if statechoice==1
-        std2=xlsread('Multiplier-Standard-Errors.xlsx',4);
-        stdb=std2(1:20,5);
-        stda=std2(1:20,7);
-    elseif statechoice==2
-        std2=xlsread('Multiplier-Standard-Errors.xlsx',5);
-        stdb=std2(1:20,5);
-        stda=std2(1:20,7);
+for l=1:L
+    est = irfTypes{l};
+    for j=1:2
+        subplot(2,L,l+(j-1)*L)
+        plot(1:1:hor, zz, 'k-', 'HandleVisibility','off')
+        hold on
+        plot(1:1:hor, linres.IRF.(est)(j,:), 'b-', 'LineWidth', 1.5, 'DisplayName', 'Point IRF');
+        plot(1:1:hor, squeeze(linres.CI.(est)(1,j,:)), 'b--', 'DisplayName', '95% CI'); % lower bound CI
+        plot(1:1:hor, squeeze(linres.CI.(est)(2,j,:)), 'b--', 'HandleVisibility', 'off'); % upper bound CI
+        axis tight
+        ylabel(ylabels{j})
+        xlabel('Horizon (Quarters)')
+        title(est)
+        legend('show')
+        
+        % Store the current axes handle
+        ax = [ax gca];
     end
 end
 
-multconfb=[cum_mult_stateb+clevel*stdb'; cum_mult_stateb-clevel*stdb'];
-multconfa=[cum_mult_statea+clevel*stda'; cum_mult_statea-clevel*stda'];
+% Link y-axes of all subplots
+linkaxes(ax, 'y');
 
-% the linear model multiplier confidence intervals are placeholders 
-for j = 1:length(irfTypes)
-    irfType = irfTypes{j};
-    lin_results.cum_mult_CI.(irfType) = [lin_results.cum_mult.(irfType)+clevel*stdlin'; lin_results.cum_mult.(irfType)-clevel*stdlin'];
-end
+sgtitle('Linear IRF Estimates')
+set(linfig, 'Position', [100, 100, 1200, 800])
+% saveas(linfig,'fig/linear_varlpavg_est.png')
 
-% | Figure 6 - Multipliers, Linear Model ONLY |
-figure(6)
-
-plot_cols = 4; plot_rows = ceil(length(irfTypes)/plot_cols) + 1;
-
-for i = 1:length(irfTypes)
-    irfType = irfTypes{i};
-    subplot(plot_rows, plot_cols, i)
-    grpyat=[(1:1:hor)', lin_results.cum_mult_CI.(irfType)(1,:)'; (hor:-1:1)', lin_results.cum_mult_CI.(irfType)(2,hor:-1:1)']; % create matrix for the CIs (basically it ends up tracing 1 -> hor upper bounds, then back around hor -> 1 lower bounds)
-    patch(grpyat(:,1), grpyat(:,2), patch_colors{i},'edgecolor', patch_colors{i}, 'DisplayName', strcat(irfType, ' CI')); % plot gray patch for CIs
-    hold on 
-    plot(1:1:hor, lin_results.cum_mult.(irfType), 'Color', line_colors{i}, 'LineWidth', 1.5, 'DisplayName', irfType); % plot point estimates for multiplier
-
-    axis tight
-    title('Linear: cumulative spending multiplier');
-    legend('Location', 'northeast')
-end
-
-% state dependent plot
-subplot(plot_rows, plot_cols, (plot_rows-1)*plot_cols + 1)
-grpyat=[(1:1:hor)', multconfa(1,:)'; (hor:-1:1)' multconfa(2,hor:-1:1)'];
-patch(grpyat(:,1), grpyat(:,2), [0.7 0.7 0.7],'edgecolor', [0.7 0.7 0.7]);
-hold on 
-plot(1:1:hor, cum_mult_statea, 'b--', 'LineWidth', 1.5);
-hold on
-plot(1:1:hor, cum_mult_stateb+clevel*stdb', 'r--', 1:1:hor, cum_mult_stateb-clevel*stdb', 'r--','LineWidth', 1)
-hold on
-plot(1:1:hor, cum_mult_stateb, 'r-o', 'LineWidth', 1.5);
-title('State dependent: cumulative spending multiplier')
-xlabel('quarter')
-axis tight

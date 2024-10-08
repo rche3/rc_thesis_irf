@@ -1,9 +1,7 @@
 function [stateay, stateby, confidenceya, confidenceyb, bs_beta_dist, pval]=statelp( ...
     data,shock,z,In,hor,transformation, clevel, opt, ...
     bootstrap,method,nlag,nstraps) 
-% computes the state dependent local projection, built off Ramey and
-% Zubairy (2018) code, but assume no time trends
-
+% computes the state dependent local projection, built off Ramey and Zubairy (2018) code, but assume no time trends and adapted for bootstrap SEs
 % settings
 h0 = 0; % hypothesis for the pvalues
 
