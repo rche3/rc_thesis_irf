@@ -64,7 +64,6 @@ DFM_estimate = DFM_est(DF_model.n_fac, DF_model.n_lags_fac, DF_model.n_lags_uar,
 if estim_diagn == 1
     run_estim_diagn; % Display several estimation diagnostics
 end
-
 % extract and store estimated DFM parameters
 
 DF_model.Phi           = DFM_estimate.Phi;
