@@ -12,9 +12,9 @@ end
 
 for j=1:dsize
     if j == 1
-        y_pos_control = 3; % rgov is ordered 3rd in the control vector
+        y_pos_control = 2; % rgov is ordered 3rd in the control vector
     else
-        y_pos_control = 2; % rgdp is ordered 2nd in the control vector
+        y_pos_control = 3; % rgdp is ordered 2nd in the control vector
     end
     [r,nnn]=size(x);
     for i=1:hor
@@ -31,11 +31,11 @@ for j=1:dsize
 
         % compute SEs
         if bootstrap == 1
-            [bs_beta_se, bs_beta_mean, bs_beta] = compute_dwb_se(results.resid, yy, x(1: end-i +1, :), results.beta, i, nlag, y_pos_control, nstraps);
-            se(:, i) = bs_beta_se;
-            bs_beta_means(j, i) = bs_beta_mean(rpos);
+            ctrlstart = rpos + 1; % the controls right after the shock position
+            bs_beta = linlp_dwbse(results.resid, yy, x(1: end-i +1, :), results.beta, i, nlag, y_pos_control, ctrlstart, nstraps);
             irf_bs_dist = bs_beta(rpos, :); % returns 1 x B bootstrapped estimates
             bs_beta_dist(:,j,i) = irf_bs_dist';
+
             if emp == 1
                 upperq = quantile(irf_bs_dist, 0.975);
                 lowerq = quantile(irf_bs_dist, 0.025);
@@ -60,11 +60,11 @@ for j=1:dsize
     end
 
     liny(j,:)=reglin(rpos,:); % only take the beta results
-    sey(j,:)=se(rpos,:);
-
+    
     if bootstrap == 1
         confidencey = bs_ci;
     else
+        sey(j,:)=se(rpos,:);
         confidencey(1,:,j)=liny(j,:)-(sey(j,:)*clevel);
         confidencey(2,:,j)=liny(j,:)+(sey(j,:)*clevel);
     end

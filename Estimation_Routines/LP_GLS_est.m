@@ -9,7 +9,7 @@ run('Estimation_Setup'); % common setup for all estimation methods
 % estimate IRF via LP
 [Beff, Sigma_hold] = lp_gls_analytical(Y', nlags, IRF_hor, 0);
 
-IRF = arrayfun(@(i) Beff(end, responseV, i, 5), 1:IRF_hor);
+IRF = arrayfun(@(i) Beff(responseV, end, i), 1:IRF_hor);
 
 % normalize - TBD
 % IRF_normalize = IRF_LP(Y,recursiveShock,normalizeV,nlags,0);

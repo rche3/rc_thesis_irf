@@ -1,4 +1,5 @@
-function [bs_beta_se, bs_beta_mean, irf_beta_bs] = linlp_dwbse(resid, y, x, beta, h, nlag, y_pos_control, ctrl_start, B)
+function beta_bs = linlp_dwbse( ...
+    resid, y, x, beta, h, nlag, y_pos_control, ctrl_start, B)
 % computes dependent wild bootstrap for LINEAR LP
 % Inputs:
     % resid is original residual T x k computed from the estimated coefficients
@@ -10,9 +11,7 @@ function [bs_beta_se, bs_beta_mean, irf_beta_bs] = linlp_dwbse(resid, y, x, beta
     % ctrl_start is the position in x where controls begin
     % B is number of bootstrap replications
 % Outputs:
-    % bs_beta_se is matrix of beta standard errors
-    % bs_beta_mean is the mean of bootstrap irfs
-    % irf_beta_bs is size(x,1) x B empirical bootstrap distribution
+    % beta_bs is size(x,1) x B empirical bootstrap distribution
 
 % check the size is the same for resid, y, x
 if size(resid, 1) == size(y, 1) && size(x, 1) == size(y,1)
@@ -22,91 +21,69 @@ else
 end
 
 % bootstrap settings
-bs_samples = B;
-
 % setup
-T_resid = length(resid); % by design, this should be T - h + 1 in length, h \in [1,20]
-demeaned_resid = resid - sum(resid)/T_resid;
-beta_bs = nan(size(beta, 1), bs_samples);
-T = T_resid - h - nlag; % our effective "T" which will be the length of the bootstrapped dependent variable
-y_bs = zeros(T, 1);
+[TT,k] = size(resid); % by design, this should be T - h + 1 in length, h \in [1,20]
+beta_bs = nan(size(beta, 1), B);
+T = TT;
 [xrow, xcol] = size(x);
 
 % DWB bootstrap settings
-% e1 = (-sqrt(5)+1)/2; e2 = (sqrt(5)+1)/2;
-% p1 = (sqrt(5)+1)/(2*sqrt(5)); p2 = 1-p1;
 e1 = 1; e2 = -1;
 p1 = 0.5; p2 = 1-p1;
 values = [e1, e2];
 probabilities = [p1, p2];
-num_samples = T;
 wild_settings = [values; probabilities];
 
 % create residual bootstrap samples
 
-for j = 1:bs_samples
+for j = 1:B
 % Print to the Command Window
-    resid_sample = datasample(demeaned_resid, T, 'Replace', true);
 
     % create the bootstrap dependent variable y and x
-    x_temp = x; % this is a temporary x variable which will become iteratively updated, initialised as our regressor matrix
-    y_bs(1:nlag,:) = y(1:nlag,:);
+    y_bs = zeros(T,1); % this is the storage for our bootstrap LP response var
+    x_bs = x; % iteratively updated bootstrap LP regressor matrix
 
     % create the DWB residuals
-    dwb_innov = generate_dwb_resid(resid_sample, nlag, wild_settings);
+    dwb_innov = generate_dwb_resid(resid, nlag, wild_settings);
     
-    for i = nlag+1:T
+    for i = 1:T
         % compute and store y_bs variables
-        y_bs(i) = x_temp(i,:) * beta + dwb_innov(i);
+        y_bs(i) = x_bs(i,:) * beta + dwb_innov(i);
         
-        % move the contemporaneously produced y to be the next period's first lag
-        controls = x_temp(:,ctrl_start:end);
-        [~,controls_cols] = size(controls);
-        z_temp = sum(controls_cols)
-        controls(i+1, y_pos_control) = y_bs(i);
+        % isolate the control vector
+        static = x_bs(:, 1:ctrl_start-1);
+        ctrls = x_bs(:, ctrl_start:end);
         
-        x_temp = [x_temp(:,1:ctrl_start-1) controls];
+        % compute the "unsplit" control vector - T x kp
+        z_temp = ctrls;
 
-        x(i,:) = ;
-
-
-
-        %%% THE CORE IDEA HERE IS JUST TO INSERT Y_T accordingly without
-        %%% having to relag all the other variables. Once they are used,
-        %%% they are no longer needed.
-
-
-        controls = x_temp(:,3:end);
-        controls(i, y_pos_control) = y_bs(i); % each y_bs should override the control in x_temp
-        
-        if i > 1
-            for n = 2:min(i, 4)
-                % ensure each 1x3 control is one version lagged of the prior
-                lag = n-1;
-                read_pos = 3 * (lag-1) + y_pos_control;
-                write_pos = 3 * lag + y_pos_control;
-                controls(i-lag, write_pos) = controls(i, read_pos);
+        % insert the current y value as the value of the:
+            % 1st lag of response variable - h+1 periods ahead of now
+            % 2nd lag of response variable - h+2 periods ahead of now
+            % ...
+            % pth lag of response variable - h+p periods ahead of now
+                 
+        for pi = 1:nlag
+            y_insert_idx = y_pos_control + (pi-1)*k;
+            future_ctrl_idx = i+h+(pi-1);
+            if future_ctrl_idx <= T
+                z_temp(future_ctrl_idx,y_insert_idx);
+            else
+                % pass
             end
+            % note that it is not "h+1" since RZ uses h=1 as contemp
+            % note (pi-1) since we add +1 to the (h+1) for how much (pi-1)
         end
-        x_temp = [x_temp(:, 1:2), controls];
-%             from i = nlags +  h + 1 onwards, the entire x_temp control vector
-%             as the regressor should be bootstrap variables
+
+        % recombine static and recurisvely computed parts of regressor matrix
+        x_bs = [static z_temp];
     end
 
     % estimate bootstrapped beta
-    x_trunc = x_temp(1:T, :);
-    results=nwest_rc(y_bs, x_trunc, 0); % note we don't need to lag x as input arg x is already lagged
+    results=nwest_rc(y_bs, x_bs, 0); % note we don't need to lag x as input arg x is already lagged
     beta_bs(:, j) = results.beta;
 end
 
-% compute variance of the bootstrapped betas
-irf_beta_bs = beta_bs;
-cov_beta = cov(beta_bs');
-bs_beta_var = diag(cov_beta);
-bs_beta_se = bs_beta_var.^(1/2);
-
-bs_beta_mean = mean(beta_bs, 2); % returns the mean of the betas across each row
-% fprintf('bs beta mean for horizon %d is %.4f \n', h, bs_beta_mean(rpos));
-
+%function end
 end
 

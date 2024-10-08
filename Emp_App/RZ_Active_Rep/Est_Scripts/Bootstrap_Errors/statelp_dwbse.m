@@ -84,3 +84,5 @@ for b = 1:B
     beta_bs(:, b) = results.beta;
 end
 
+%function end
+end

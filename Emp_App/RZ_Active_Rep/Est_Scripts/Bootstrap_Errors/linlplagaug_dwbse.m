@@ -1,4 +1,4 @@
-function bs_beta_se = lplagaug_bserrors(resid, y, x, beta)
+function bs_beta_se = linlplagaug_dwbse(resid, y, x, beta)
 % COMPUTE_BOOTSTRAP_SE Summary of this function goes here
 % Returns the bootstrapped standard errors for each beta in the LP
 % regression given horizon, observations, Newey-West residuals

@@ -21,13 +21,11 @@ lags_select    = 2; % options: 1 (AIC), 2 (4 lags), 3 (8 lags), 4 (12 lags)
 exper_select_group = {[2,5], [3,6], [1,4]}; % combine G and MP for observed shock, recursive, and IV
 
 % select estimation methods for each experiment
-methods_iv_select        = [1 2 3 4 5 6 7 8 9 10 11 12 13];
-methods_obsshock_select  = [1 2 3 4 5 6 7 8 9 10];
-methods_recursive_select = [1 2 3 4 5 6 7 8 9 10];
-
-% methods_iv_select        = [1 2 3 4 5 6 7 8]; 
-% methods_obsshock_select  = [1 2 3 4 5 6 7];
-% methods_recursive_select = [1 2 3 4 5 6 7];
+% settings.est.methods_name    = {'svar','svar_corrbias','bvar','lp','lp_corrbias','lp_penalize','var_avg', 'lp_lagaug', 'lp_gls', 'varlp_avg'};
+% settings.est.methods_name    = [settings.est.methods_name {'svar_iv'} {'residual'} {'lp_IV_controls'}]; % add SVAR-IV, resid_est, ... (other IV estimators) to the estimator list
+methods_iv_select        = [1 4 8 9 10 11 12 13]; % 1.svar, 4.lp, 8.lp_lagaug, 9.lp_gls, '10.varlp_avg', 11-13.svar_iv, residual, lp_iv_controls
+methods_obsshock_select  = [1 4 8 9 10];
+methods_recursive_select = [1 4 8 9 10];
 
 % select a subset of DGPs
 DGP_select = 0; % options: 0 (all DGPs), 1 (specifications with asset price & sentiment),
@@ -132,6 +130,7 @@ for n_mode=1:length(mode_folders) % For each robustness check mode...
     
             the_methods_index = cellfun(@(x) find(strcmp(res.settings.est.methods_name, x)),  methods_fields{ne}, 'UniformOutput',false); % index of each method
             the_methods_index = cell2mat(the_methods_index);
+
             for j=1:length(the_objects)
                 
                 the_result = sqrt(extract_struct(res.results.(the_objects{j})));
@@ -139,13 +138,11 @@ for n_mode=1:length(mode_folders) % For each robustness check mode...
                 the_ranks = permute(tiedrank(permute(the_result, [3 1 2])), [2 3 1]); % Rank procedures from lowest to highest (break ties by averaging)
     
                 % normalized losses
-                
                 plot_loss(horzs-1, squeeze(quantile(the_result./the_rms_irf, loss_quant, 2)), [], ...
                     strjoin({exper_plotname, ': Relative', the_titles{j}}), methods_names_plot, font_size);
                 plot_save(fullfile(output_folder, strcat(exper_names{ne}, '_loss_', lower(the_titles{j}), '_reltruth', remark_loss_quant)), output_suffix);
                 
                 % loss function ranks
-                
                 plot_loss(horzs-1, squeeze(mean(the_ranks, 2)), [], ...
                     strjoin({exper_plotname, ': Average rank of', the_titles{j}}), methods_names_plot, font_size);
                 plot_save(fullfile(output_folder, strcat(exper_names{ne}, '_loss_', lower(the_titles{j}), '_avgrank')), output_suffix);

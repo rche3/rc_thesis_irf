@@ -1,4 +1,4 @@
-function [liny,confidencey] = linSVAR(y,hor,p,rind,sind,clevel,bootstrap,B,normalise)
+function [liny,confidencey, beta] = linSVAR(y,hor,p,rind,sind,clevel,bootstrap,B,normalise)
     % SVAR computes IRFs (Cholesky) and bootstrapped standard errors using SVAR estimation
     % Inputs:
         % y is the T x k vector of observations
@@ -86,6 +86,7 @@ function [liny,confidencey] = linSVAR(y,hor,p,rind,sind,clevel,bootstrap,B,norma
         for ri=1:rsize
             for hi=1:hor
                 bsvec = squeeze(irf_bs_beta(:,ri,hi));
+%                 disp([mean(bsvec), liny(ri,hi)])
                 se(ri,hi) = std(bsvec);
             end
         end

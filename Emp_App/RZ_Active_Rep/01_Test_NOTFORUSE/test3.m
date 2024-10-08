@@ -70,13 +70,14 @@ shockchoice=1; % 1 means news shock; 2 means BP shock
 hor=20;
 
 fig = figure;
+zz=zeros(1,hor);
 
 ri = 1;
 ax1 = subplot(2,2,1);
 hold on
 plot(1:1:hor, zz, 'k-', 'HandleVisibility','off')
-plot(1:1:hor, rzirfa(ri,:), 'b-', 'LineWidth', 1.5, 'DisplayName', 'Non ZLB: Point')
-plot(1:1:hor, squeeze(rzcia(1,ri,:)), 'b--', 'LineWidth', 1, 'DisplayName', 'Non ZLB: CI')
+plot(1:1:hor, rzirfa(ri,:), 'b-', 'LineWidth', 1.5, 'DisplayName', 'ZLB: Point')
+plot(1:1:hor, squeeze(rzcia(1,ri,:)), 'b--', 'LineWidth', 1, 'DisplayName', 'ZLB: CI')
 plot(1:1:hor, squeeze(rzcia(2,ri,:)), 'b--', 'LineWidth', 1, 'HandleVisibility', 'off')
 plot(1:1:hor, rzirfb(ri,:), 'r-', 'LineWidth', 1.5, 'DisplayName', 'Non ZLB: Point')
 plot(1:1:hor, squeeze(rzcib(1,ri,:)), 'r--', 'LineWidth', 1, 'DisplayName', 'Non ZLB: CI')
@@ -90,8 +91,8 @@ legend('show')
 ax2 = subplot(2,2,2);
 hold on
 plot(1:1:hor, zz, 'k-', 'HandleVisibility','off')
-plot(1:1:hor, myirfa(ri,:), 'b-', 'LineWidth', 1.5, 'DisplayName', 'Non ZLB: Point')
-plot(1:1:hor, squeeze(mycia(1,ri,:)), 'b--', 'LineWidth', 1, 'DisplayName', 'Non ZLB: CI')
+plot(1:1:hor, myirfa(ri,:), 'b-', 'LineWidth', 1.5, 'DisplayName', 'ZLB: Point')
+plot(1:1:hor, squeeze(mycia(1,ri,:)), 'b--', 'LineWidth', 1, 'DisplayName', 'ZLB: CI')
 plot(1:1:hor, squeeze(mycia(2,ri,:)), 'b--', 'LineWidth', 1, 'HandleVisibility', 'off')
 plot(1:1:hor, myirfb(ri,:), 'r-', 'LineWidth', 1.5, 'DisplayName', 'Non ZLB: Point')
 plot(1:1:hor, squeeze(mycib(1,ri,:)), 'r--', 'LineWidth', 1, 'DisplayName', 'Non ZLB: CI')
@@ -108,8 +109,8 @@ ri = 2;
 ax3 = subplot(2,2,3);
 hold on
 plot(1:1:hor, zz, 'k-', 'HandleVisibility','off')
-plot(1:1:hor, rzirfa(ri,:), 'b-', 'LineWidth', 1.5, 'DisplayName', 'Non ZLB: Point')
-plot(1:1:hor, squeeze(rzcia(1,ri,:)), 'b--', 'LineWidth', 1, 'DisplayName', 'Non ZLB: CI')
+plot(1:1:hor, rzirfa(ri,:), 'b-', 'LineWidth', 1.5, 'DisplayName', 'ZLB: Point')
+plot(1:1:hor, squeeze(rzcia(1,ri,:)), 'b--', 'LineWidth', 1, 'DisplayName', 'ZLB: CI')
 plot(1:1:hor, squeeze(rzcia(2,ri,:)), 'b--', 'LineWidth', 1, 'HandleVisibility', 'off')
 plot(1:1:hor, rzirfb(ri,:), 'r-', 'LineWidth', 1.5, 'DisplayName', 'Non ZLB: Point')
 plot(1:1:hor, squeeze(rzcib(1,ri,:)), 'r--', 'LineWidth', 1, 'DisplayName', 'Non ZLB: CI')
@@ -123,8 +124,8 @@ legend('show')
 ax4 = subplot(2,2,4);
 hold on
 plot(1:1:hor, zz, 'k-', 'HandleVisibility','off')
-plot(1:1:hor, myirfa(ri,:), 'b-', 'LineWidth', 1.5, 'DisplayName', 'Non ZLB: Point')
-plot(1:1:hor, squeeze(mycia(1,ri,:)), 'b--', 'LineWidth', 1, 'DisplayName', 'Non ZLB: CI')
+plot(1:1:hor, myirfa(ri,:), 'b-', 'LineWidth', 1.5, 'DisplayName', 'ZLB: Point')
+plot(1:1:hor, squeeze(mycia(1,ri,:)), 'b--', 'LineWidth', 1, 'DisplayName', 'ZLB: CI')
 plot(1:1:hor, squeeze(mycia(2,ri,:)), 'b--', 'LineWidth', 1, 'HandleVisibility', 'off')
 plot(1:1:hor, myirfb(ri,:), 'r-', 'LineWidth', 1.5, 'DisplayName', 'Non ZLB: Point')
 plot(1:1:hor, squeeze(mycib(1,ri,:)), 'r--', 'LineWidth', 1, 'DisplayName', 'Non ZLB: CI')
