@@ -52,7 +52,7 @@ title('IRF with resid est')
 axis tight
 
 % linkaxes([ax1, ax2], 'y')
-linkaxes([ax1, ax2, ax4], 'y')
-% linkaxes([ax1, ax2, ax3, ax4], 'y')
+% linkaxes([ax1, ax2, ax4], 'y')
+linkaxes([ax1, ax2, ax3, ax4], 'y');
 
-fig.Position = [100, 100, 1200, 400]
+fig.Position = [100, 100, 1200, 400];
