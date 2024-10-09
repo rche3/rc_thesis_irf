@@ -175,15 +175,8 @@ fig.Position = [100 100 800 300];  % [left bottom width height]
 saveas(fig, 'multiplier_point_est.png')
 
 disp(['Long run LP multiplier is: ' num2str(linres.cum_mult.LP(end))])
-disp(['Long run SVAR multiplier is: ' num2str(linres.cum_mult.SVAR(end))])
-disp(['Long run Model Averaged multiplier is: ' num2str(linres.cum_mult.SVARLPAvg(end))])
-
-%%
-lpmult = linres.cum_mult.LP(end);
-svarmult = linres.cum_mult.SVAR(end);
-mdlavgmult = linres.cum_mult.SVARLPAvg(end);
-
-[lpmult; svarmult; mdlavgmult]
+disp(['Long run SVAR multiplier is: ' num2str(linres.cum_mult.SVAR(end)])
+disp(['Long run Model Averaged multiplier is: ' linres.cum_mult.SVARLPAvg(end)])
 
 %% State dependent LP point estimates
 z=xorig; % lagged observations
