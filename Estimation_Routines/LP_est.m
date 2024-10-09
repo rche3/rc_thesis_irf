@@ -14,8 +14,8 @@ end
 
 % normalize
 
-IRF_normalize = IRF_LP(Y,recursiveShock,normalizeV,nlags,0);
-IRF = IRF_resp / IRF_normalize; % normalize by response of normalization variable
+IRF_normalize_ols = IRF_LP(Y,recursiveShock,normalizeV,nlags,0)
+IRF = IRF_resp / IRF_normalize_ols; % normalize by response of normalization variable
 IRF = IRF';
 
 end

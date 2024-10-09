@@ -215,6 +215,7 @@ parfor i_MC = 1:settings.simul.n_MC
         % select data
         
         data_sim_select = select_data_fn(data_sim_all,settings,i_spec);
+%         save('sample_data_obsG.mat', 'data_sim_select');
             
         % estimate IRFs
         

@@ -15,7 +15,7 @@ DF_model.n_lags_uar = 4; % lag order of measurement error
 % selection of DGPs from encompassing model
 
 settings.specifications.random_select         = 1; % randomly select variables from DFM list?
-settings.specifications.random_n_spec         = 5; % number of random specifications (DGPs)
+settings.specifications.random_n_spec         = 3; % number of random specifications (DGPs)
 settings.specifications.random_n_var          = 5; % number of variables in each random specification
 settings.specifications.random_category_range = [1 20; 21 31; 32 76; 77 86; 87 94; 95 131; 132 141;...
                                                  142 159; 160 171; 172 180; 181 207]; % ranges for Stock-Watson variable categories (see their Table 1)
@@ -44,7 +44,7 @@ settings.est.VAR_root_quant = 0.75; % store this quantile of the roots of the co
 
 % number of Monte Carlo draws
 
-settings.simul.n_MC    = 100; % number of Monte Carlo reps
+settings.simul.n_MC    = 4; % number of Monte Carlo reps
 settings.simul.seed    = (1:settings.simul.n_MC)*10 + randi([0,9],1,settings.simul.n_MC); % random seed for each Monte Carlo
 
 % sample settings

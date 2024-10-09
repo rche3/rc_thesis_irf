@@ -23,9 +23,9 @@ exper_select_group = {[2,5], [3,6], [1,4]}; % combine G and MP for observed shoc
 % select estimation methods for each experiment
 % settings.est.methods_name    = {'svar','svar_corrbias','bvar','lp','lp_corrbias','lp_penalize','var_avg', 'lp_lagaug', 'lp_gls', 'varlp_avg'};
 % settings.est.methods_name    = [settings.est.methods_name {'svar_iv'} {'residual'} {'lp_IV_controls'}]; % add SVAR-IV, resid_est, ... (other IV estimators) to the estimator list
-methods_iv_select        = [1 4 8 9 10 11 12 13]; % 1.svar, 4.lp, 8.lp_lagaug, 9.lp_gls, '10.varlp_avg', 11-13.svar_iv, residual, lp_iv_controls
-methods_obsshock_select  = [1 4 8 9 10];
-methods_recursive_select = [1 4 8 9 10];
+methods_iv_select        = [1 5 8 9 10 11 12 13]; % 1.svar, 4.lp, 8.lp_lagaug, 9.lp_gls, '10.varlp_avg', 11-13.svar_iv, residual, lp_iv_controls
+methods_obsshock_select  = [1 5 8 9 10];
+methods_recursive_select = [1 5 8 9 10];
 
 % select a subset of DGPs
 DGP_select = 0; % options: 0 (all DGPs), 1 (specifications with asset price & sentiment),

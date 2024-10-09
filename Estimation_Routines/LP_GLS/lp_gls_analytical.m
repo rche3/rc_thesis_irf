@@ -34,11 +34,9 @@ yeff=saveY(:,arp+h:end)'; %Dependent variable
 Teffective=size(yeff',2);
 F=[ones(1,Teffective);saveF]; % Design Matrix
  
- 
 [betahat,~,~,resids] = ols(yeff,F',0) ;
 
 epshat=resids;
- 
 
     Beff = zeros(p,q,maxh) ;
     s_errors=zeros(p,q,maxh) ;
@@ -46,8 +44,6 @@ epshat=resids;
 
     Beff(:,:,h) = betahat ;
         Sigma_hold=resids'*resids/Teffective;
-
-
         %bias adjusment
 if badj==1
 
@@ -329,6 +325,4 @@ end
   Beff=Beff(2:q+1,:,:); 
     s_errors=s_errors(2:q+1,:,:);
 
- 
- 
 return

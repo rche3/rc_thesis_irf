@@ -106,7 +106,7 @@ plot(lower(:,shockind,2), 'LineStyle','--')
 plot(upper(:,shockind,2), 'LineStyle','--')
 legend('irf', 'lower', 'upper')
 ylabel('IRF to Gov Spend')
-set_plot_properties(ax1, green_color, 'MATLAB IRF SEs - Monte Carlo', subplot_title_size)
+set_plot_properties(ax1, green_color, 'MATLAB IRF SEs using Monte Carlo CIs', subplot_title_size)
 
 ax2 = subplot(2,3,2);
 hold on
@@ -115,7 +115,7 @@ plot(stata_irfs.g_lower, 'LineStyle','--')
 plot(stata_irfs.g_upper, 'LineStyle','--')
 legend('irf', 'lower', 'upper')
 ylabel('IRF to Gov Spend')
-set_plot_properties(ax2, green_color, 'STATA (RZ Original) IRF SEs - Analytical', subplot_title_size)
+set_plot_properties(ax2, green_color, 'STATA (RZ Original) IRF SEs - Analytical CIs', subplot_title_size)
 axis tight
 
 ax3 = subplot(2,3,3);
@@ -161,7 +161,7 @@ axis tight
 linkaxes([ax1, ax2, ax3],'y')
 linkaxes([ax4, ax5, ax6], 'y')
 linkaxes([ax1, ax2, ax3, ax4, ax5, ax6], 'x')
-fig.Position = [100 100 1000 600]; % [left bottom width height]
+fig.Position = [100 100 1100 600]; % [left bottom width height]
 
 % Save the figure with high resolution
 print(fig, 'Fig/linearSVAR_mc_bs_analytical', '-dpng', '-r300');
