@@ -15,7 +15,7 @@ IRF = Beff;
 IRF_normalize_gls = lp_gls_analytical_simp(Y', nlags, 0, recursiveShock, normalizeV);
 IRF = IRF/IRF_normalize_gls;
 
-disp(['GLS result is ', num2str(IRF(1))]);
+% disp(['GLS result is ', num2str(IRF(1))]);
 
 end
 

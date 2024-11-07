@@ -15,6 +15,6 @@ end
 IRF_normalize_ols = IRF_LP(Y,recursiveShock,normalizeV,nlags,0);
 IRF = IRF_resp / IRF_normalize_ols; % normalize by response of normalization variable
 IRF = IRF';
-disp(['OLS result is ', num2str(IRF(1))]);
+% disp(['OLS result is ', num2str(IRF(1))]);
 
 end

@@ -256,9 +256,7 @@ parfor i_MC = 1:settings.simul.n_MC
                 case 'lp_lagaug' % lag-augmented LP
                     [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec)]...
                         = LP_lagaug_est(data_sim_select,settings, 0);
-                    
-                disp('GLS start')
-   
+                       
                 case 'lp_gls' % LP GLS using Lusompa (2023) method
                     [temp_irf(i_method,:,i_spec),temp_n_lags(i_method,i_spec)]...
                         = LP_GLS_RC_est(data_sim_select,settings);
