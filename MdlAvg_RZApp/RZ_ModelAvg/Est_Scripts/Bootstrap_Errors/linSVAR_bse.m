@@ -24,6 +24,7 @@ function bs_irf_dist = linSVAR_bse(y,beta,resid,p,hor,B,sind,rind,normalise)
     bs_irf_dist = zeros(B,rsize,hor);
 
     for b=1:B
+        % disp(['Bootstrap rep: ', num2str(b), ' out of ', num2str(B)])
         y_bs = zeros(T,K); % we compute a T x K dependent variable via RFVAR DGP 
         y_bs(1:p,:) = y(1:p,:);
         res_samp = datasample(resid, TT, 'Replace', true);

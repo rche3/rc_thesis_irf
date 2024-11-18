@@ -5,7 +5,7 @@ function [IRF,n_lags_est,largest_root,LM_stat,LM_pvalue,Hausman_stat,Hausman_pva
     [IRF_var,~,largest_root,LM_stat,LM_pvalue,Hausman_stat,Hausman_pvalue,Granger_stat,Granger_pvalue] ...
     = SVAR_est(data_sim,settings,bias_corrected);
     
-    [IRF_lp,n_lags_est] = LP_est(data_sim,settings,bias_corrected);
+    [IRF_lp,n_lags_est] = LP_est(data_sim,settings,1);
 
     IRF = IRF_var.*varlp_est_weights + IRF_lp.*(1-varlp_est_weights);
 end

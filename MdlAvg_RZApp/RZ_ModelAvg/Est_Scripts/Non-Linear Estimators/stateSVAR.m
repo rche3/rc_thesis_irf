@@ -1,4 +1,5 @@
-function [irfa, irfb, cia, cib, bs_beta_dist, pval, beta] = stateSVAR(y, I, p, hor, rind, sind, B, bootstrap, clevel, method)
+function [irfa, irfb, cia, cib, bs_beta_dist, pval, beta, multa, multb] = stateSVAR( ...
+    y, I, p, hor, rind, sind, B, bootstrap, clevel, method)
 % STATESVAR computes the irfs and CIs for the state dependent vector autoregression
 % By default uses the Cholesky decomposition for SVAR identification
 % Inputs:
@@ -157,5 +158,10 @@ function [irfa, irfb, cia, cib, bs_beta_dist, pval, beta] = stateSVAR(y, I, p, h
         cib(1,:,:) = nan(size(cib,2), size(cib,3));
         cib(2,:,:) = nan(size(cib,2), size(cib,3));
     end
+
+% compute multiplier point estimates
+multa = cumsum(irfa(2,:))./cumsum(irfa(1,:));
+multb = cumsum(irfb(2,:))./cumsum(irfb(1,:));
 end
+
 

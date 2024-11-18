@@ -36,8 +36,8 @@ wild_settings = [values; probabilities];
 
 % create residual bootstrap samples
 
-for j = 1:B
-% Print to the Command Window
+for b = 1:B
+    % disp(['Bootstrap rep: ', num2str(b), ' out of ', num2str(B)])
 
     % create the bootstrap dependent variable y and x
     y_bs = zeros(T,1); % this is the storage for our bootstrap LP response var
@@ -81,7 +81,7 @@ for j = 1:B
 
     % estimate bootstrapped beta
     results=nwest_rc(y_bs, x_bs, 0); % note we don't need to lag x as input arg x is already lagged
-    beta_bs(:, j) = results.beta;
+    beta_bs(:, b) = results.beta;
 end
 
 %function end

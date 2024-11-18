@@ -1,4 +1,4 @@
-function [stateay, stateby, confidenceya, confidenceyb, bs_beta_dist, pval]=statelp( ...
+function [stateay, stateby, confidenceya, confidenceyb, bs_beta_dist, pval, multa, multb]=statelp( ...
     data,shock,z,In,hor,transformation, clevel, opt, ...
     bootstrap,method,nlag,nstraps) 
 % computes the state dependent local projection, built off Ramey and Zubairy (2018) code, but assume no time trends and adapted for bootstrap SEs
@@ -107,6 +107,9 @@ for j=1:dsize
         confidenceya(2,j,:)=stateay(j,:)+(seay(j,:)*clevel);
         confidenceyb(1,j,:)=stateby(j,:)-(seby(j,:)*clevel);
         confidenceyb(2,j,:)=stateby(j,:)+(seby(j,:)*clevel);
-    end
-    
+    end    
 end
+
+% compute multiplier point estimates
+multa = cumsum(stateay(2,:))./cumsum(stateay(1,:));
+multb = cumsum(stateby(2,:))./cumsum(stateby(1,:));

@@ -73,11 +73,11 @@ title('True IRF')
 % specs for model average estimation
 nlag = 2;
 bootstrap_ci_method = "normal";
-use_bootstrap = 0;
+use_bootstrap = 1;
 clevel = 1.96; % we are interested 95% CI
 timePerLoop = zeros(n_MC, 1);  % Store time for each iteration
-n_straps = 200;
-n_MC = 500;
+n_straps = 400;
+n_MC = 1000;
 
 for i = 1:n_MC
     % Generate data from VAR(1)
@@ -135,6 +135,7 @@ end
 % Results
 mean_coverage = mean(coverage,1); % 1 = rows, to "collapse" the rows
 
+%% Save LP
 filename = "Bootstrap/results/v2_rzDGPVAR2_lp_MC" + num2str(n_MC) + "_BS" + num2str(n_straps) + ".mat";
 save(filename, "mean_coverage")
 
@@ -146,7 +147,7 @@ use_bootstrap = 1;
 bootstrap_ci_method = "normal";
 clevel = 1.96; % we are interested 95% CI
 timePerLoop = zeros(n_MC, 1);  % Store time for each iteration
-n_straps = 200;
+n_straps = 400;
 n_MC = 1000;
 
 for i = 1:n_MC
@@ -206,6 +207,7 @@ end
 % Results
 mean_coverage = mean(coverage,1); % 1 = rows, to "collapse" the rows
 
+%% Save SVAR
 filename = "Bootstrap/results/rzDGPVAR2_SVAR_MC" + num2str(n_MC) + "_BS" + num2str(n_straps) + ".mat";
 
 save(filename, "mean_coverage")
@@ -215,14 +217,12 @@ save(filename, "mean_coverage")
 nlag = 2;
 bootstrap_ci_method = "normal";
 clevel = 1.96; % we are interested 95% CI
-lambda_read = load("We")
-lambda = [0.5; 1; 0; 0.1; 0.1; 
-          0.2; 0.2; 0.2; 0.2; 0.3;
-          0.3; 0.3; 0.3; 0.3; 0.3;
-          0.3; 0.3; 0.3; 0.3; 0.2]' ;
+lambda_read = load("Weight Selection/opt_weight.mat");
+lambda = lambda_read.opt_weights
+lambda = 0.5 * ones(1,H )
 timePerLoop = zeros(n_MC, 1);  % Store time for each iteration
-n_MC = 500;
-n_straps = 200;
+n_MC = 1000;
+n_straps = 400;
 
 for i = 1:n_MC
     iterStart = tic;
@@ -287,32 +287,45 @@ mean_coverage = mean(coverage,1); % 1 = rows, to "collapse" the rows
 
 fprintf('Empirical coverage rate: %.3f ', mean_coverage);
 
-filename = "Bootstrap/results/newweightsT300s_rind2_rzDGPVAR2_SVARLP_MC" + num2str(n_MC) + "_BS" + num2str(n_straps) + ".mat";
+filename = "Bootstrap/results/0.5lambda_rind2_rzDGPVAR2_SVARLP_MC" + num2str(n_MC) + "_BS" + num2str(n_straps) + ".mat";
 
 save(filename, "mean_coverage")
 
-%% PLOT FOR PAPER
+%% PLOT FOR PAPER - All Three
 ci = 0.95;
 
-res = load("Bootstrap/results/rind2_rzDGPVAR2_SVARLP_MC500_BS200.mat");
-coverage_data = res.mean_coverage;
+plot_files = {
+    "Bootstrap/results/newweightsT300s_rind2_rzDGPVAR2_SVARLP_MC1000_BS400.mat",
+    "Bootstrap/results/rzDGPVAR2_SVAR_MC1000_BS400.mat",
+    };
+
+for i=1:length(plot_files)
+    eval(['res' num2str(i) '= load(plot_files{i});'])
+    eval(['coverage_data' num2str(i) '=res' num2str(i) '.mean_coverage;'])
+end
 
 fig = figure;
 hold on
+colors = ['g', 'b', 'k', 'm', 'c', 'y'];  % Basic MATLAB colors
+
 plot(1:H, ci*ones(H,1), 'LineStyle','--', 'LineWidth', 1, 'Color','r');
-plot(1:H, coverage_data, 'LineStyle', '-', 'LineWidth', 1, 'Color','black')
+for i=1:length(plot_files)
+    eval(['coverage_data = coverage_data' num2str(i)]); 
+    plot(1:H, coverage_data, 'LineStyle', '-', 'LineWidth', 1, 'Color', colors(i));
+end
 legend('95%', 'MC Coverage')
 xlim([0,H])
 ylim([0,1])
 xlabel('Horizon of IRF')
 ylabel('Average Coverage')
 title('Monte Carlo Simulation of Model Average CIs')
+legend('95%', 'Model Average Coverage', 'SVAR Coverage')
 
-n_MC = 500;
-n_straps = 200;
+n_MC = 1000;
+n_straps = 400;
 subtitle(['Number of MC sims: ', num2str(n_MC), '; Number of bootstrap reps: ', num2str(n_straps)]);
 
-saveas(fig, 'Fig/newweightsT300s_rzdgp_rind2_MC_test_mdlavg_strap.png')
+saveas(fig, 'Fig/all_estimator_coverage_rzgdp_nov6.png')
 
 %% DEBUGGING FROM NOW ON
 % (Try a single MC run DGP simulation)

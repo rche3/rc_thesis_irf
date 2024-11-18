@@ -1,12 +1,10 @@
-cd /Users/rogerchen/Documents/MATLAB/rc_thesis_irf/DFM/
-
 % Start the timer
 tic;
 
-estimand_vars = {'ObsShock', 'Recursive', 'IV'};
+estimand_vars = {'Recursive'};
 % estimand_vars = {'IV'};
 % Define the values for the DGP types
-dgp_types = {'G', 'MP'};
+dgp_types = {'G','MP'};
 
 % Iterate over all combinations of estimand variables and DGP types
 for i = 1:length(estimand_vars)

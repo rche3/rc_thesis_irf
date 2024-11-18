@@ -29,7 +29,7 @@ function irf_bs_beta = linSVARLP_avg_dwbse(y,beta,p,B,hor,lambda, ...
     irf_bs_beta = zeros(B, r, hor);
 
     for b=1:B
-%         disp(['Bootstrap rep: ', num2str(b), ' out of ', num2str(B)])
+        % disp(['Bootstrap rep: ', num2str(b), ' out of ', num2str(B)])
         y_bs = zeros(T,k);
         y_bs(1:p,:) = y(1:p,:);
 

@@ -1,8 +1,8 @@
 %% ENCOMPASSING DFM
 
 % key variables for simulation
-number_MC_reps = 100;
-num_DGPs = 5;
+number_MC_reps = 1000;
+num_DGPs = 100;
 
 % some notes on estimation time (MBPRO M1) - for IV only (2 GDP-Estimand Combos)
 % 60 DGP MonteCarlo Reps takes approx 3 minutes, conservatively 

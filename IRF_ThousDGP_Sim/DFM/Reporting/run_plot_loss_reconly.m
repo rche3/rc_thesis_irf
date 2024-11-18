@@ -1,12 +1,14 @@
 %% DFM SIMULATION STUDY: PLOT BIAS/VARIANCE LOSSES
-% Dake Li, Mikkel Plagborg-MÃ¸ller and Christian Wolf
+% Dake Li, Mikkel Plagborg-Møller and Christian Wolf
 
 %% HOUSEKEEPING
 
+cd /Users/rogerchen/Documents/MATLAB/rc_thesis_irf/IRF_ThousDGP_Sim/DFM/Reporting/
 clc
 clear all
 close all
 addpath(genpath(fullfile('..', 'Subroutines')))
+
 
 %% SETTINGS
 
@@ -18,14 +20,14 @@ mode_select    = 1; % options: 1 (baseline), 2 (small sample), 3 (large sample),
 lags_select    = 2; % options: 1 (AIC), 2 (4 lags), 3 (8 lags), 4 (12 lags)
 
 % select and group experiments
-exper_select_group = {[2,5], [3,6], [1,4]}; % combine G and MP for observed shock, recursive, and IV
+exper_select_group = {[1,2]}; % combine G and MP for observed shock, recursive, and IV
 
 % select estimation methods for each experiment
 % settings.est.methods_name    = {'svar','svar_corrbias','bvar','lp','lp_corrbias','lp_penalize','var_avg', 'lp_lagaug', 'lp_gls', 'varlp_avg'};
 % settings.est.methods_name    = [settings.est.methods_name {'svar_iv'} {'residual'} {'lp_IV_controls'}]; % add SVAR-IV, resid_est, ... (other IV estimators) to the estimator list
-methods_iv_select        = [1 4 5 6 7 8 9 10 11 12 13]; % 1.svar, 4.lp, 8.lp_lagaug, 9.lp_gls
-methods_obsshock_select  = [1 2 3 4 5 6 7 8 9 10];
-methods_recursive_select = [1 2 3 4 5 6 7 8 9 10];
+
+methods_iv_select        = [1:13]; % 1.svar, 4.lp, 8.lp_lagaug, 9.lp_gls, '10.varlp_avg', 11-13.svar_iv, residual, lp_iv_controls
+% methods_iv_select        = [1 3 5 6 8 9 10 11 13]; % 1.svar, 4.lp, 8.lp_lagaug, 9.lp_gls, '10.varlp_avg', 11-13.svar_iv, residual, lp_iv_controls
 
 % select a subset of DGPs
 DGP_select = 0; % options: 0 (all DGPs), 1 (specifications with asset price & sentiment),
@@ -39,7 +41,7 @@ reg_cat_horz = []; % if non-empty, only use subset of horizons for regression (e
 loss_quant = 0.5; % report which quantile loss across DGPs? (default is median loss, i.e. 0.5)
 
 % Apply shared settings
-settings_shared;
+settings_shared_reconly;
 
 %% FIGURES
 

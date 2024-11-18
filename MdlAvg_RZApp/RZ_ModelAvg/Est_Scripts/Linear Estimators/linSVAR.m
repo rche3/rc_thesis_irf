@@ -1,4 +1,4 @@
-function [liny,confidencey, beta] = linSVAR(y,hor,p,rind,sind,clevel,bootstrap,B,normalise, method)
+function [liny,confidencey, beta, mult_lpu] = linSVAR(y,hor,p,rind,sind,clevel,bootstrap,B,normalise, method)
     % SVAR computes IRFs (Cholesky) and bootstrapped standard errors using SVAR estimation
     % Inputs:
         % y is the T x k vector of observations
@@ -11,6 +11,7 @@ function [liny,confidencey, beta] = linSVAR(y,hor,p,rind,sind,clevel,bootstrap,B
     % Outputs
         % liny is the r x hor matrix of irf responses
         % confidencey is the 2 x r x h matrix of upper and lower CI bounds
+        % mult_lpu is as 3 x hor matrix of multipliers of liny(2,:) on liny(1,:)
 
     % setup
     [T,k] = size(y);
@@ -24,6 +25,7 @@ function [liny,confidencey, beta] = linSVAR(y,hor,p,rind,sind,clevel,bootstrap,B
     % create placeholder matrices
     liny = nan(rsize,hor);
     confidencey = nan(2,rsize,hor);
+    mult_lpu = zeros(3,hor);
 
     % COMPUTE IRFS
     % Step 1: Completed reduced form regression
@@ -81,16 +83,21 @@ function [liny,confidencey, beta] = linSVAR(y,hor,p,rind,sind,clevel,bootstrap,B
         % pass
     end
     liny = theta_i;
+    
+    if size(liny,1) > 1
+        mult_lpu(3,:) = cumsum(liny(2,:))./cumsum(liny(1,:));
+    else
+    end
 
     % Step 5: Bootstrap inference
     if bootstrap == 1
-        irf_bs_beta = linSVAR_bse(y,beta,resid,p,hor,B,sind,rind,normalise);
+        bs_irf_dist = linSVAR_bse(y,beta,resid,p,hor,B,sind,rind,normalise);
         switch method
             case "normal"
                 se = zeros(rsize, hor);
                 for ri=1:rsize
                     for hi=1:hor
-                        bsvec = squeeze(irf_bs_beta(:,ri,hi));
+                        bsvec = squeeze(bs_irf_dist(:,ri,hi));
         %                 disp([mean(bsvec), liny(ri,hi)])
                         se(ri,hi) = std(bsvec);
                     end
@@ -101,18 +108,40 @@ function [liny,confidencey, beta] = linSVAR(y,hor,p,rind,sind,clevel,bootstrap,B
                 alpha = 1 - normcdf(clevel);
                 for ri=1:rsize
                     for hi=1:hor
-                        bsvec = squeeze(irf_bs_beta(:,ri,hi));
+                        bsvec = squeeze(bs_irf_dist(:,ri,hi));
                         upperq = quantile(bsvec, 1-alpha);
                         lowerq = quantile(bsvec, alpha);
                         confidencey(1,ri,hi) = lowerq;
                         confidencey(2,ri,hi) = upperq;
                     end
-                end         
+                end
             otherwise 
                 error('Invalid method specified. Use "normal" or "percentile"')
+        end
+
+        if size(liny,1) > 1
+            mult_bs_dist = cumsum(squeeze(bs_irf_dist(:,2,:)),2)./cumsum(squeeze(bs_irf_dist(:,1,:)),2);
+            switch method
+                case "normal"
+                    % multiplier CI
+                    mult_se = var(mult_bs_dist,1,1).^(1/2);
+                    mult_lpu(1,:) = mult_lpu(3,:) - clevel * mult_se;
+                    mult_lpu(2,:) = mult_lpu(3,:) + clevel * mult_se;
+                case "percentile"
+                    % multiplier CI
+                    alpha = 1-normcdf(clevel);
+                    mult_lpu(1,:) = quantile(mult_bs_dist, 1-alpha);
+                    mult_lpu(2,:) = quantile(mult_bs_dist, alpha);
+            otherwise 
+                error('Invalid method specified. Use "normal" or "percentile"')
+            end
+        else
         end
     else
         confidencey = zeros(2,rsize,hor);
     end
+
+    % Step 6: Bootstrap inference for multiplier
+    
 end
 

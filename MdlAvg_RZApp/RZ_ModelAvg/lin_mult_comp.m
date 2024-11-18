@@ -33,7 +33,7 @@ elseif shockchoice==2
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-hor=20; % horizon for IRFs
+hor=21; % horizon for IRFs
 clevel= 1.96; % confidence level % 1.96  1.64;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -62,46 +62,77 @@ end
 linres = struct(); % struct to store linear model results
 
 % compute the IRFs now with various methods
-irfTypes = {'LP', 'LP_BC', 'LP_Penalised', 'LP_Lagaug', 'SVAR', 'VARLP_Avg'};
-irfTypes = {'LP', 'SVAR', 'SVARLPAvg'};
-
+irfTypes = {'LP', 'SVAR', 'SVARLPAvg_50', 'SVARLPAvg_Opt'};
 L = length(irfTypes);
 
-%% LP Estimation w/ DW Bootstrap
 bootstrap=1;
-nstraps = 100;
-method = 'normal';
-lambda = 0.5;
+nstraps = 400;
+method = 'percentile';
 p=nlag;
 
 %%% LP
 e=1; est=irfTypes{e};
-[linres.IRF.(est), linres.CI.(est)]=linlp(data,x,hor,rpos,transformation, clevel, opt, bootstrap, p, nstraps, method); 
-%% VAR Estimation w/ Bootstrap
+[linres.IRF.(est), linres.CI.(est), ~, ~, linres.mult_lpu.(est)]=linlp(data,x,hor,rpos,transformation, clevel, opt, bootstrap, p, nstraps, method); 
+
+%%% VAR Estimation w/ Bootstrap
 e=2; est=irfTypes{e};
 
-% var preliminaries
 normalise = 1;
 y = [x(:,rpos), data];
-p=nlag;
 rind = [2,3]; % location of response variables in y
 sind = 1; % location of shock variable in y
-nstraps = 1000;
-bootstrap = 1;
-[linres.IRF.(est), linres.CI.(est), ~] = linSVAR(y, hor, p, rind, sind, clevel, bootstrap, nstraps, normalise);
+[linres.IRF.(est), linres.CI.(est), ~, linres.mult_lpu.(est)] = linSVAR(y, hor, p, rind, sind, clevel, bootstrap, nstraps, normalise, method);
 
-%% VAR / LP Averaged
+%%% VAR / LP Averaged w/ Custom Bootstrap
 e=3; est = irfTypes{e};
 
-% varlp setup
-method = 'normal';
-lambda = 0.5; % weight for VAR irfs
-nstraps = 2;
-[linres.IRF.(est), linres.CI.(est)] = linSVARLP_avg(hor,p, method, clevel, nstraps, lambda, ...
+lambda = 0.5*ones(1,hor); % weight for VAR irfs
+[linres.IRF.(est), linres.CI.(est), linres.mult_lpu.(est)] = linSVARLP_avg(hor,p, method, clevel, nstraps, lambda, bootstrap, ...
     data,x,rpos,transformation,opt, ...
     y, rind, sind, normalise);
 
-%%
+%%% VAR / LP Averaged w/ Custom Bootstrap, Opt
+e=4; est = irfTypes{e};
+
+lambda_read = load("Weight Selection/opt_weight.mat");
+lambda = [0.5, lambda_read.opt_weights];
+[linres.IRF.(est), linres.CI.(est), linres.mult_lpu.(est)] = linSVARLP_avg(hor,p, method, clevel, nstraps, lambda, bootstrap, ...
+    data,x,rpos,transformation,opt, ...
+    y, rind, sind, normalise);
+
+irfTypes_concat = '';
+
+for l = 1:L
+    irfTypes_concat = [irfTypes_concat irfTypes{l} '_'];
+end
+
+filename = "Results/lin_" + method + "_" + irfTypes_concat + "BS" + num2str(nstraps);
+save(filename, "linres")
+
+%% Load data to plot
+
+res = load("Results/lin_percentile_LP_SVAR_SVARLPAvg_50_SVARLPAvg_Opt_BS400.mat");
+linres = res.linres;
+
+% long run estimates for multiplier
+disp('Long run multiplier estimates')
+point = [];
+for l=1:L
+    est = irfTypes{l};
+    point = [point; linres.mult_lpu.(est)(3,end)];
+end
+disp(point) 
+
+disp('Long run multiplier CI')
+ci = [];
+for l=1:L
+    est = irfTypes{l};
+    ci = [ci; linres.mult_lpu.(est)(1,end) linres.mult_lpu.(est)(2,end)];
+end
+disp(ci) 
+
+%% IRF Plots
+
 close all
 zz=zeros(1,hor);
 linfig = figure;
@@ -114,11 +145,11 @@ for l=1:L
     est = irfTypes{l};
     for j=1:2
         subplot(2,L,l+(j-1)*L)
-        plot(1:1:hor, zz, 'k-', 'HandleVisibility','off')
+        plot(0:1:hor-1, zz, 'k-', 'HandleVisibility','off')
         hold on
-        plot(1:1:hor, linres.IRF.(est)(j,:), 'b-', 'LineWidth', 1.5, 'DisplayName', 'Point IRF');
-        plot(1:1:hor, squeeze(linres.CI.(est)(1,j,:)), 'b--', 'DisplayName', '95% CI'); % lower bound CI
-        plot(1:1:hor, squeeze(linres.CI.(est)(2,j,:)), 'b--', 'HandleVisibility', 'off'); % upper bound CI
+        plot(0:1:hor-1, linres.IRF.(est)(j,1:hor), 'b-', 'LineWidth', 1.5, 'DisplayName', 'Point IRF');
+        plot(0:1:hor-1, squeeze(linres.CI.(est)(1,j,1:hor)), 'b--', 'DisplayName', '95% CI'); % lower bound CI
+        plot(0:1:hor-1, squeeze(linres.CI.(est)(2,j,1:hor)), 'b--', 'HandleVisibility', 'off'); % upper bound CI
         axis tight
         ylabel(ylabels{j})
         xlabel('Horizon (Quarters)')
@@ -132,8 +163,46 @@ end
 
 % Link y-axes of all subplots
 linkaxes(ax, 'y');
+sgtitle(['Linear IRF Estimates', ' | Number of bootstrap replications: ', num2str(nstraps), ' | CI Method: ', method])
+set(linfig, 'Position', [300, 300, 1200, 800])
+saveas(linfig,'fig/linear_varlpavg_est.png')
 
-sgtitle('Linear IRF Estimates')
-set(linfig, 'Position', [100, 100, 1200, 800])
-% saveas(linfig,'fig/linear_varlpavg_est.png')
+%% Multiplier Plots
+close all
 
+h_math_start = 1; % the mathematical horizon h at which we want to start plotting multipliers
+
+zz=zeros(1,hor-h_math_start);
+linfig = figure;
+ylabels = {'Government Spending', 'GDP'};
+
+% Create an array to store axes handles
+ax = [];
+titles = {'Local Projection', 'SVAR', 'SVAR LP 50/50', 'SVAR LP Opt Weight'};
+
+for l=1:L
+    est = irfTypes{l};
+    subplot(1,L,l)
+    plot(h_math_start:1:hor-1, zz, 'k-', 'HandleVisibility','off')
+    hold on
+    plot(h_math_start:1:hor-1, linres.mult_lpu.(est)(3,1+h_math_start:hor), 'b-', 'LineWidth', 1.5, 'DisplayName', 'Multiple Point Estimate');
+    plot(h_math_start:1:hor-1, linres.mult_lpu.(est)(1,1+h_math_start:hor), 'b--', 'DisplayName', '95% CI'); % lower bound CI
+    plot(h_math_start:1:hor-1, linres.mult_lpu.(est)(2,1+h_math_start:hor), 'b--', 'HandleVisibility', 'off'); % upper bound CI
+    axis tight
+    ylabel('Government Spending Multiplier')
+    xlabel('Horizon (Quarters)')
+    title(titles{l})
+    legend('show')
+    
+    % Store the current axes handle
+    ax = [ax gca];
+    xlim([h_math_start, hor-1])
+    xticks(h_math_start:2:hor-1)
+end
+
+% Link y-axes of all subplots
+linkaxes(ax, 'y');
+
+sgtitle(['Linear multiplier Estimates', ' | Number of bootstrap replications: ', num2str(nstraps), ' | CI Method: ', method])
+set(linfig, 'Position', [300, 300, 1000, 400])
+saveas(linfig,'Fig/linest_multiplier_perc.png')

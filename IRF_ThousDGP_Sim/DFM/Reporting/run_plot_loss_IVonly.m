@@ -3,7 +3,7 @@
 
 %% HOUSEKEEPING
 
-cd /Users/rogerchen/Documents/MATLAB/rc_thesis_irf/DFM/Reporting/
+cd /Users/rogerchen/Documents/MATLAB/rc_thesis_irf/IRF_ThousDGP_Sim/DFM/Reporting/
 clc
 clear all
 close all
@@ -27,7 +27,7 @@ exper_select_group = {[1,2]}; % combine G and MP for observed shock, recursive, 
 % settings.est.methods_name    = [settings.est.methods_name {'svar_iv'} {'residual'} {'lp_IV_controls'}]; % add SVAR-IV, resid_est, ... (other IV estimators) to the estimator list
 
 methods_iv_select        = [1:13]; % 1.svar, 4.lp, 8.lp_lagaug, 9.lp_gls, '10.varlp_avg', 11-13.svar_iv, residual, lp_iv_controls
-% methods_iv_select        = [1 4 5 8 9 10 11 13]; % 1.svar, 4.lp, 8.lp_lagaug, 9.lp_gls, '10.varlp_avg', 11-13.svar_iv, residual, lp_iv_controls
+methods_iv_select        = [1 3 5 6 8 9 10 11 13]; % 1.svar, 4.lp, 8.lp_lagaug, 9.lp_gls, '10.varlp_avg', 11-13.svar_iv, residual, lp_iv_controls
 
 % select a subset of DGPs
 DGP_select = 0; % options: 0 (all DGPs), 1 (specifications with asset price & sentiment),

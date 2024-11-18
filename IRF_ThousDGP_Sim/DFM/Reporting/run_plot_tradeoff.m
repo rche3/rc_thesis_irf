@@ -25,12 +25,15 @@ mode_select    = 1; % options: 1 (baseline), 2 (small sample), 3 (large sample),
 lags_select    = 2; % options: 1 (AIC), 2 (4 lags), 3 (8 lags), 4 (12 lags)
 
 % select and group experiments
-exper_select_group = {[2,5], [3,6], [1,4]}; % combine G and MP for observed shock, recursive, and IV
+% exper_select_group = {[2,5], [3,6], [1,4]}; % combine G and MP for observed shock, recursive, and IV
+exper_select_group = {[1]}; % IV only
+% exper_select_group = {[3,6]}; % Recursive only
+% exper_select_group = {[2,5]}; % ObsShock only
 
 % select estimation methods for each experiment
-methods_iv_select        = [1 2 3 4 5 6 7 8];
-methods_obsshock_select  = [1 2 3 4 5 6 7];
-methods_recursive_select = [1 2 3 4 5 6 7];
+methods_iv_select        = [1:13];
+methods_obsshock_select = [1 3 4 5 6 8 9 10];
+methods_recursive_select = [1 3 4 5 6 8 9 10];
 
 % select a subset of DGPs
 DGP_select = 0; % options: 0 (all DGPs), 1 (specifications with asset price & sentiment),
@@ -62,9 +65,18 @@ choice_averaging = 1;
 
 % lines
 
-lines_plot = lines;
-lines_plot = [lines_plot(1:7,:); 0.5 0.5 0.5];
-lines_plot = lines_plot([4 3 1 2 8 5 6 7],:);
+lines_plot = lines(12);
+
+% Add the gray color as the 13th color
+lines_plot = [lines_plot; 0.5 0.5 0.5];
+
+% Reorder if desired - you'll need to adjust the reordering to handle 13 colors
+% Here's one way to keep your original ordering preference for the first 8 
+% and append the rest
+initial_order = [4 3 1 2 13 5 6 7];
+remaining_indices = setdiff(1:13, initial_order);
+new_order = [initial_order remaining_indices];
+lines_plot = lines_plot(new_order,:);
 
 %----------------------------------------------------------------
 % Colors
